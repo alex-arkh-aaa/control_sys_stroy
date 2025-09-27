@@ -39,5 +39,5 @@ jobs:
     
     - name: Run notify-service tests
       run: |
-        cd services/notification-service
+        cd services/notify-service
         python -m pytest tests/test.py -v
