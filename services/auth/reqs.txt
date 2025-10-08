@@ -6,9 +6,10 @@ python-jose[cryptography]==3.3.0
 passlib[argon2]
 argon2-cffi
 python-multipart==0.0.6
-faststream[rabbitmq]==0.2.0
 pydantic-settings==2.1.0
 alembic==1.12.1
 pytest
 pytest-asyncio
 httpx
+fast-depends==2.4.0
+faststream==0.1.6
