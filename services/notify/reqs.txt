@@ -1,7 +1,7 @@
 fastapi==0.104.1
 uvicorn==0.24.0
-pydantic==2.4.2
-pydantic-settings==2.1.0
+pydantic==1.10.12
+pydantic-settings==1.0.0    # ← ПОНИЗЬ ДО 1.0.0
 sqlalchemy==2.0.23
 python-telegram-bot==20.7
 python-multipart==0.0.6
@@ -9,5 +9,5 @@ email-validator==2.1.0
 pathlib2==2.3.7.post1
 requests==2.31.0
 aiosmtplib==3.0.0
-faststream[rabbitmq]==0.1.6
-fast-depends==2.4.2
+fast-depends==2.3.0
+faststream==0.1.6
