@@ -1,3 +1,4 @@
 .env
 notifications.db
 __pycache__
+.venv_notify
