@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход - Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .links {
+            text-align: center;
+            margin-top: 25px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #363;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .user-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .user-details {
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>Control System</h1>
+            <p>Вход в систему управления проектами</p>
+        </div>
+
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success"></div>
+
+        <div id="userInfo" class="user-info">
+            <h3>✅ Вы успешно вошли в систему</h3>
+            <div class="user-details">
+                <div><strong>Имя:</strong> <span id="userName"></span></div>
+                <div><strong>Email:</strong> <span id="userEmail"></span></div>
+                <div><strong>Должность:</strong> <span id="userJob"></span></div>
+            </div>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required placeholder="your@email.com">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required placeholder="Ваш пароль">
+            </div>
+
+            <button type="submit" class="btn">Войти в систему</button>
+            
+            <button type="button" class="btn btn-secondary" id="logoutBtn" style="display: none;">
+                Выйти из системы
+            </button>
+        </form>
+
+        <div class="links">
+            Нет аккаунта? <a href="/register/">Зарегистрируйтесь</a>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = localStorage.getItem('auth_token');
+
+        // Проверяем, есть ли уже токен
+        if (currentToken) {
+            checkAuthStatus();
+        }
+
+        // Обработка формы входа
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value
+            };
+
+            try {
+                const response = await fetch('/token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Сохраняем токен
+                    localStorage.setItem('auth_token', data.access_token);
+                    currentToken = data.access_token;
+                    
+                    showSuccess('Вход выполнен успешно!');
+                    document.getElementById('loginForm').reset();
+                    
+                    // Показываем информацию о пользователе
+                    await checkAuthStatus();
+                } else {
+                    showError(data.detail || 'Ошибка при входе в систему');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        // Кнопка выхода
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    // Удаляем токен
+                    localStorage.removeItem('auth_token');
+                    currentToken = null;
+                    
+                    showSuccess('Вы успешно вышли из системы');
+                    hideUserInfo();
+                } else {
+                    showError('Ошибка при выходе из системы');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        // Проверка статуса авторизации
+        async function checkAuthStatus() {
+            if (!currentToken) return;
+
+            try {
+                const response = await fetch('/users/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    // Берем первого пользователя (в реальном приложении нужно получить текущего пользователя)
+                    if (users.length > 0) {
+                        showUserInfo(users[0]);
+                    }
+                } else {
+                    // Токен невалидный, удаляем его
+                    localStorage.removeItem('auth_token');
+                    currentToken = null;
+                }
+            } catch (error) {
+                console.error('Ошибка проверки авторизации:', error);
+            }
+        }
+
+        function showUserInfo(user) {
+            document.getElementById('userName').textContent = user.name;
+            document.getElementById('userEmail').textContent = user.email;
+            document.getElementById('userJob').textContent = getJobTitleText(user.job_title);
+            
+            document.getElementById('userInfo').style.display = 'block';
+            document.getElementById('logoutBtn').style.display = 'block';
+            document.getElementById('loginForm').style.display = 'none';
+        }
+
+        function hideUserInfo() {
+            document.getElementById('userInfo').style.display = 'none';
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+        }
+
+        function getJobTitleText(job) {
+            const jobs = {
+                'engineer': 'Инженер',
+                'manager': 'Менеджер', 
+                'seo': 'Руководитель'
+            };
+            return jobs[job] || job;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

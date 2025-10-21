@@ -8,6 +8,11 @@ from .security import *
 from .send_notifies import *
 from sqlalchemy import select
 
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+from fastapi.responses import HTMLResponse
+
 
 
 @asynccontextmanager
@@ -19,6 +24,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="app/templates")
 
 async def get_current_user(authorization: str = Header(...), db: AsyncSession = Depends(get_db)):
     # 1. Проверяем формат заголовка Authorization
@@ -71,6 +79,10 @@ async def delete_user(user_creds: UserCreds, db: AsyncSession = Depends(get_db))
     
     return {"message": "User deleted"}
 
+@app.get("/register/", response_class=HTMLResponse)
+async def show_registration_form(request: Request):
+    return templates.TemplateResponse("registration.html", {"request": request})
+
 @app.post("/register/")
 async def register_user(user: User, db: AsyncSession = Depends(get_db)):
     existing_user = await crud.get_user_by_email(db, user.email)
@@ -86,6 +98,10 @@ async def register_user(user: User, db: AsyncSession = Depends(get_db)):
     print(ans)
 
     return {"msg": "Пользователь успешно зарегистрирован", 'user': new_user}
+
+@app.get("/login/", response_class=HTMLResponse)
+async def show_login_form(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
 
 
 @app.post("/token")

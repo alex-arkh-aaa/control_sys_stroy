@@ -12,3 +12,4 @@ alembic
 pytest
 pytest-asyncio
 aiohttp
+jinja2
