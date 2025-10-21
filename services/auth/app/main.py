@@ -5,6 +5,7 @@ from . import crud
 from .schemas import *
 from contextlib import asynccontextmanager
 from .security import *
+from .send_notifies import *
 from sqlalchemy import select
 
 
@@ -53,6 +54,10 @@ async def register_user(user: User, db: AsyncSession = Depends(get_db)):
 
     hashed_password = get_password_hash(user.password)
     new_user = await crud.create_user(db, user.name, user.email, user.age, hashed_password)
+
+    message = 'Поздравляем Вас с началом работы в Control System!'
+    data = {"email": new_user.email, "message": message, "full_name": new_user.name,  "subject": 'Успешная регистрация!'}
+    await send_notification(data)
 
     return {"msg": "Пользователь успешно зарегистрирован", 'user': new_user}
 
