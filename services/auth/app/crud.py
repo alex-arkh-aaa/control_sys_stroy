@@ -3,12 +3,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .models import User
 
 
-async def create_user(db: AsyncSession, name: str, email: str, age: int, hashed_password: str):
-    user = User(name=name, email=email, age=age, hashed_password=hashed_password)
+async def create_user(db: AsyncSession, name: str, email: str, age: int, hashed_password: str, job_title: str):
+    user = User(name=name, email=email, age=age, hashed_password=hashed_password, job_title=job_title)
     db.add(user)
     await db.commit()
     await db.refresh(user)
     return user
+
 
 async def get_user(db: AsyncSession, user_id: int):
     result = await db.execute(select(User).where(User.id == user_id))

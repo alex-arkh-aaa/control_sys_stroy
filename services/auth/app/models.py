@@ -9,3 +9,4 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     age = Column(Integer)
     hashed_password = Column(String)
+    job_title = Column(String, nullable=False)  # ← Просто String!

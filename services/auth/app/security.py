@@ -6,6 +6,9 @@ from config import settings
 # Настраиваем контекст для хеширования паролей
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
+token_blacklist = set()
+
+
 # Функция для хеширования пароля
 def get_password_hash(password):
     
@@ -30,7 +33,19 @@ def create_access_token(data: dict, expires_delta = settings.ACCESS_TOKEN_EXPIRE
 
 def decode_token(token: str):
     try:
+        # Проверяем, не в черном списке ли токен
+        if token in token_blacklist:
+            return None
+            
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
     except JWTError:
         return None  # Если токен недействителен или истёк
+    
+
+def revoke_token(token: str):
+    token_blacklist.add(token)
+    
+# Функция для проверки валидности токена (для зависимостей)
+def verify_token(token: str):
+    return decode_token(token) is not None
