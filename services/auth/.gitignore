@@ -1,3 +1,5 @@
+.venv_notify
+.nevn_core
 .venv_auth
 
 .cache/
@@ -8,3 +10,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.env
+__pycache__
+
+

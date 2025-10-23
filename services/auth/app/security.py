@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta, timezone
@@ -5,13 +6,10 @@ from config import settings
 
 # Настраиваем контекст для хеширования паролей
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-
 token_blacklist = set()
-
 
 # Функция для хеширования пароля
 def get_password_hash(password):
-    
     try:
         result = pwd_context.hash(password)
         print("✅ Хеширование успешно")
@@ -34,8 +32,8 @@ def create_access_token(data: dict, expires_delta = settings.ACCESS_TOKEN_EXPIRE
 def decode_token(token: str):
     try:
         # Проверяем, не в черном списке ли токен
-        if token in token_blacklist:
-            return None
+        # if token in token_blacklist:
+        #     return None
             
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         return payload
@@ -44,8 +42,41 @@ def decode_token(token: str):
     
 
 def revoke_token(token: str):
-    token_blacklist.add(token)
+    ...
+    #token_blacklist.add(token)
     
 # Функция для проверки валидности токена (для зависимостей)
 def verify_token(token: str):
     return decode_token(token) is not None
+
+def check_create_project_permission(current_user):
+    """Проверяет право на создание проекта"""
+    if current_user.job_title not in ["manager", "seo"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Только менеджеры и руководители могут создавать проекты"
+        )
+
+def check_edit_defect_permission(current_user, defect):
+    """Проверяет право на редактирование дефекта"""
+    if current_user.job_title == "seo":
+        return True  # Руководитель может всё
+        
+    if defect.author_id == current_user.id:
+        return True  # Автор может редактировать свой дефект
+        
+    if defect.assignee_id == current_user.id:
+        return True  # Исполнитель может менять статус
+        
+    raise HTTPException(
+        status_code=403, 
+        detail="Нет прав для редактирования этого дефекта"
+    )
+
+async def check_project_access(db, project_id: int, current_user):
+    """Проверяет доступ пользователя к проекту"""
+    from . import crud
+    project = await crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Проект не найден")
+    return True

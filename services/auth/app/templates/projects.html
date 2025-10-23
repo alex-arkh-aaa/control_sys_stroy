@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проекты - Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .user-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-text {
+            color: #333;
+        }
+
+        .user-role {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .project-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .project-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .project-address {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .project-description {
+            color: #777;
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .project-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            color: #667eea;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .empty-state {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 60px 40px;
+            text-align: center;
+        }
+
+        .empty-state h3 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #363;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>Control System</h1>
+                <p>Управление строительными проектами</p>
+            </div>
+
+            <div class="user-info">
+                <div class="user-details">
+                    <div class="user-text">
+                        <strong id="userName"></strong> • <span id="userEmail"></span>
+                    </div>
+                    <div class="user-role" id="userRole"></div>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="showCreateProjectModal()">➕ Новый проект</button>
+                    <button class="btn btn-secondary" onclick="logout()">🚪 Выйти</button>
+                </div>
+            </div>
+
+            <div id="errorMessage" class="error"></div>
+            <div id="successMessage" class="success"></div>
+        </div>
+
+        <div id="projectsContainer" class="projects-grid">
+            <!-- Проекты будут загружены здесь -->
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <h3>Пока нет проектов</h3>
+            <p>Создайте первый проект чтобы начать работу</p>
+            <button class="btn" onclick="showCreateProjectModal()">Создать проект</button>
+        </div>
+    </div>
+
+    <!-- Модальное окно создания проекта -->
+    <div id="createProjectModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #333;">Создать новый проект</h3>
+            <form id="createProjectForm">
+                <div class="form-group">
+                    <label for="projectName">Название проекта *</label>
+                    <input type="text" id="projectName" name="name" required placeholder="ЖК 'Солнечный'">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectAddress">Адрес *</label>
+                    <input type="text" id="projectAddress" name="address" required placeholder="ул. Строителей, 123">
+                </div>
+
+                <div class="form-group">
+                    <label for="projectDescription">Описание</label>
+                    <textarea id="projectDescription" name="description" placeholder="Описание строительного объекта..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button type="submit" class="btn" style="flex: 1;">Создать проект</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateProjectModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = localStorage.getItem('auth_token');
+        let currentUser = null;
+
+        // Загрузка при старте
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!currentToken) {
+                window.location.href = '/login/';
+                return;
+            }
+            loadUserInfo();
+            loadProjects();
+        });
+
+        // // Загрузка информации о пользователе
+        // async function loadUserInfo() {
+        //     try {
+        //         const response = await fetch('/api/users/', {
+        //             headers: {
+        //                 'Authorization': `Bearer ${currentToken}`
+        //             }
+        //         });
+
+        //         if (response.ok) {
+        //             const users = await response.json();
+        //             if (users.length > 0) {
+        //                 currentUser = users[0];
+        //                 document.getElementById('userName').textContent = currentUser.name;
+        //                 document.getElementById('userEmail').textContent = currentUser.email;
+        //                 document.getElementById('userRole').textContent = getRoleText(currentUser.job_title);
+        //             }
+        //         }
+        //     } catch (error) {
+        //         console.error('Ошибка загрузки пользователя:', error);
+        //     }
+        // }
+
+        // Загрузка информации о пользователе
+        async function loadUserInfo() {
+            try {
+                console.log('Загрузка информации о пользователе...');
+                
+                const response = await fetch('/api/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    console.log('Получены пользователи:', users);
+                    
+                    if (users.length > 0) {
+                        currentUser = users[0];
+                        console.log('Текущий пользователь:', currentUser);
+                        
+                        document.getElementById('userName').textContent = currentUser.name;
+                        document.getElementById('userEmail').textContent = currentUser.email;
+                        document.getElementById('userRole').textContent = getRoleText(currentUser.job_title);
+                    } else {
+                        console.error('Пользователи не найдены');
+                    }
+                } else {
+                    console.error('Ошибка загрузки пользователей:', response.status);
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+            }
+        }
+
+        // Загрузка проектов
+        async function loadProjects() {
+            try {
+                console.log('Загрузка проектов...');
+                const response = await fetch('/api/projects/', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                console.log('Статус ответа:', response.status);
+                
+                if (response.ok) {
+                    const projects = await response.json();
+                    console.log('Проекты загружены:', projects);
+                    displayProjects(projects);
+                } else {
+                    const errorText = await response.text();
+                    console.error('Ошибка сервера:', errorText);
+                    showError('Ошибка загрузки проектов: ' + response.status);
+                }
+            } catch (error) {
+                console.error('Ошибка сети:', error);
+                showError('Ошибка соединения с сервером: ' + error.message);
+            }
+        }
+
+        // Отображение проектов
+        function displayProjects(projects) {
+            const container = document.getElementById('projectsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (projects.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'grid';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = projects.map(project => `
+                <div class="project-card" onclick="openProject(${project.id})">
+                    <div class="project-header">
+                        <div style="flex: 1;">
+                            <div class="project-title">${project.name}</div>
+                            <div class="project-address">📍 ${project.address}</div>
+                        </div>
+                    </div>
+                    <div class="project-description">${project.description || 'Описание отсутствует'}</div>
+                    
+                </div>
+            `).join('');
+        }
+
+        // Создание проекта
+        document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('projectName').value,
+                address: document.getElementById('projectAddress').value,
+                description: document.getElementById('projectDescription').value
+            };
+
+            try {
+                const response = await fetch('/api/projects/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const project = await response.json();
+                    showSuccess('Проект успешно создан!');
+                    hideCreateProjectModal();
+                    document.getElementById('createProjectForm').reset();
+                    loadProjects();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Ошибка при создании проекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        // Открытие проекта
+        function openProject(projectId) {
+            window.location.href = `/projects/${projectId}/defects-page/`;
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                // ОЧИЩАЕМ все данные
+                localStorage.removeItem('auth_token');
+                currentToken = null;
+                currentUser = null;
+                
+                // Принудительно переходим на страницу входа
+                window.location.href = '/login/';
+                
+            } catch (error) {
+                console.error('Ошибка выхода:', error);
+                // Все равно очищаем и переходим
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login/';
+            }
+        }
+
+        // Модальные окна
+        function showCreateProjectModal() {
+            if (currentUser && !['manager', 'seo'].includes(currentUser.job_title)) {
+                showError('Только менеджеры и руководители могут создавать проекты');
+                return;
+            }
+            document.getElementById('createProjectModal').style.display = 'flex';
+        }
+
+        function hideCreateProjectModal() {
+            document.getElementById('createProjectModal').style.display = 'none';
+        }
+
+        // Утилиты
+        function getRoleText(role) {
+            const roles = {
+                'engineer': 'Инженер',
+                'manager': 'Менеджер',
+                'seo': 'Руководитель'
+            };
+            return roles[role] || role;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Закрытие модального окна по клику вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('createProjectModal');
+            if (event.target === modal) {
+                hideCreateProjectModal();
+            }
+        }
+    </script>
+</body>
+</html>

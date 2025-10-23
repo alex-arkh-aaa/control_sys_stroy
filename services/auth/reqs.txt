@@ -13,3 +13,4 @@ pytest
 pytest-asyncio
 aiohttp
 jinja2
+argon2-cffi

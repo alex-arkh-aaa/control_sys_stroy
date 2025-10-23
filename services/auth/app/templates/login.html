@@ -218,6 +218,42 @@
         }
 
         // Обработка формы входа
+        // document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        //     e.preventDefault();
+            
+        //     const formData = {
+        //         email: document.getElementById('email').value,
+        //         password: document.getElementById('password').value
+        //     };
+
+        //     try {
+        //         const response = await fetch('/token', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //             },
+        //             body: JSON.stringify(formData)
+        //         });
+
+        //         const data = await response.json();
+
+        //         if (response.ok) {
+        //             // Сохраняем токен
+        //             localStorage.setItem('auth_token', data.access_token);
+        //             currentToken = data.access_token;
+                    
+        //             showSuccess('Вход выполнен успешно!');
+        //             document.getElementById('loginForm').reset();
+                    
+        //             // Показываем информацию о пользователе
+        //             await checkAuthStatus();
+        //         } else {
+        //             showError(data.detail || 'Ошибка при входе в систему');
+        //         }
+        //     } catch (error) {
+        //         showError('Ошибка соединения с сервером');
+        //     }
+        // });
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -245,8 +281,14 @@
                     showSuccess('Вход выполнен успешно!');
                     document.getElementById('loginForm').reset();
                     
-                    // Показываем информацию о пользователе
-                    await checkAuthStatus();
+                    // ПЕРЕЗАГРУЖАЕМ информацию о пользователе
+                    await loadUserInfo();
+                    
+                    // Перенаправляем на главную страницу
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 1000);
+                    
                 } else {
                     showError(data.detail || 'Ошибка при входе в систему');
                 }
@@ -286,7 +328,7 @@
             if (!currentToken) return;
 
             try {
-                const response = await fetch('/users/', {
+                const response = await fetch('/api/users/', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${currentToken}`

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дефекты - Control System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            color: #333;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .logo p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .project-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .project-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .project-text h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .project-address {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
+        .defects-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        .defects-list {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+        }
+
+        .defects-sidebar {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            height: fit-content;
+        }
+
+        .defect-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .defect-card:hover {
+            background: #e9ecef;
+            transform: translateX(5px);
+        }
+
+        .defect-card.critical {
+            border-left-color: #dc3545;
+            background: #fee;
+        }
+
+        .defect-card.high {
+            border-left-color: #fd7e14;
+            background: #fff3cd;
+        }
+
+        .defect-card.medium {
+            border-left-color: #ffc107;
+        }
+
+        .defect-card.low {
+            border-left-color: #28a745;
+            background: #efe;
+        }
+
+        .defect-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .defect-title {
+            color: #333;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .defect-priority {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .priority-critical { background: #dc3545; }
+        .priority-high { background: #fd7e14; }
+        .priority-medium { background: #ffc107; }
+        .priority-low { background: #28a745; }
+
+        .defect-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #6c757d;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .status-new { background: #6c757d; }
+        .status-in_progress { background: #007bff; }
+        .status-under_review { background: #17a2b8; }
+        .status-closed { background: #28a745; }
+        .status-cancelled { background: #dc3545; }
+
+        .defect-meta {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 10px;
+        }
+
+        .defect-description {
+            color: #555;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 40px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #363;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .comments-section {
+            margin-top: 30px;
+        }
+
+        .comment {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .comment-date {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .comment-text {
+            color: #555;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <h1>Control System</h1>
+                <p>Управление дефектами проекта</p>
+            </div>
+
+            <div class="project-info">
+                <div class="project-details">
+                    <div class="project-text">
+                        <h2 id="projectName">Загрузка...</h2>
+                        <div class="project-address" id="projectAddress"></div>
+                    </div>
+                    <a href="/" class="btn btn-secondary">← Назад к проектам</a>
+                </div>
+                <!-- <div class="actions">
+                    <button class="btn btn-success" onclick="showCreateDefectModal()">➕ Новый дефект</button>
+                    <button class="btn btn-secondary" onclick="logout()">🚪 Выйти</button>
+                </div> -->
+            </div>
+
+            <div id="errorMessage" class="error"></div>
+            <div id="successMessage" class="success"></div>
+        </div>
+
+        <div class="defects-container">
+            <!-- Основной список дефектов -->
+            <div class="defects-list">
+                <h3 class="section-title">Дефекты проекта</h3>
+                <div id="defectsContainer">
+                    <!-- Дефекты будут загружены здесь -->
+                </div>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <h3>Пока нет дефектов</h3>
+                    <p>Создайте первый дефект чтобы начать работу</p>
+                </div>
+            </div>
+
+            <!-- Сайдбар с формой создания дефекта -->
+            <div class="defects-sidebar">
+                <h3 class="section-title">Создать дефект</h3>
+                <form id="createDefectForm">
+                    <div class="form-group">
+                        <label for="defectTitle">Заголовок *</label>
+                        <input type="text" id="defectTitle" name="title" required placeholder="Краткое описание проблемы">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="defectDescription">Описание *</label>
+                        <textarea id="defectDescription" name="description" required placeholder="Подробное описание дефекта..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="defectPriority">Приоритет</label>
+                        <select id="defectPriority" name="priority">
+                            <option value="low">Низкий</option>
+                            <option value="medium" selected>Средний</option>
+                            <option value="high">Высокий</option>
+                            <option value="critical">Критический</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="defectDueDate">Срок устранения</label>
+                        <input type="date" id="defectDueDate" name="due_date">
+                    </div>
+
+                    <button type="submit" class="btn" style="width: 100%;">Создать дефект</button>
+                </form>
+
+                <!-- Секция комментариев для выбранного дефекта -->
+                <div id="commentsSection" class="comments-section" style="display: none;">
+                    <h3 class="section-title">Комментарии</h3>
+                    <div id="commentsContainer"></div>
+                    <form id="addCommentForm" style="margin-top: 15px;">
+                        <div class="form-group">
+                            <textarea id="commentText" placeholder="Добавить комментарий..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Добавить комментарий</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentToken = localStorage.getItem('auth_token');
+        let currentProjectId = null;
+        let currentUser = null;
+        let selectedDefectId = null;
+
+        // Загрузка при старте
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!currentToken) {
+                window.location.href = '/login/';
+                return;
+            }
+            
+            currentProjectId = getProjectIdFromUrl();
+            if (!currentProjectId) {
+                showError('ID проекта не указан');
+                return;
+            }
+            
+            loadUserInfo();
+            loadProjectInfo();
+            loadDefects();
+        });
+
+        // Получение ID проекта из URL
+        function getProjectIdFromUrl() {
+            const path = window.location.pathname;
+            const match = path.match(/\/projects\/(\d+)\/defects/);
+            return match ? parseInt(match[1]) : null;
+        }
+
+        // Загрузка информации о пользователе
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/api/users/', {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const users = await response.json();
+                    if (users.length > 0) {
+                        currentUser = users[0];
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+            }
+        }
+
+        // Загрузка информации о проекте
+        async function loadProjectInfo() {
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const project = await response.json();
+                    document.getElementById('projectName').textContent = project.name;
+                    document.getElementById('projectAddress').textContent = project.address;
+                }
+            } catch (error) {
+                showError('Ошибка загрузки информации о проекте');
+            }
+        }
+
+        // Загрузка дефектов
+        async function loadDefects() {
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const defects = await response.json();
+                    displayDefects(defects);
+                } else {
+                    showError('Ошибка загрузки дефектов');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        }
+
+        // Отображение дефектов
+        function displayDefects(defects) {
+            const container = document.getElementById('defectsContainer');
+            const emptyState = document.getElementById('emptyState');
+
+            if (defects.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            container.innerHTML = defects.map(defect => `
+                <div class="defect-card ${defect.priority}" onclick="selectDefect(${defect.id})">
+                    <div class="defect-header">
+                        <div style="flex: 1;">
+                            <div class="defect-title">${defect.title}</div>
+                            <div class="defect-meta">
+                                <span class="defect-status status-${defect.status}">${getStatusText(defect.status)}</span>
+                                Создан: ${new Date(defect.created_at).toLocaleDateString()}
+                            </div>
+                        </div>
+                        <div class="defect-priority priority-${defect.priority}">
+                            ${getPriorityText(defect.priority)}
+                        </div>
+                    </div>
+                    <div class="defect-description">${defect.description}</div>
+                </div>
+            `).join('');
+        }
+
+        // Создание дефекта
+        document.getElementById('createDefectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('defectTitle').value,
+                description: document.getElementById('defectDescription').value,
+                priority: document.getElementById('defectPriority').value,
+                due_date: document.getElementById('defectDueDate').value || null
+            };
+
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const defect = await response.json();
+                    showSuccess('Дефект успешно создан!');
+                    document.getElementById('createDefectForm').reset();
+                    loadDefects();
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Ошибка при создании дефекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        // Выбор дефекта
+        function selectDefect(defectId) {
+            selectedDefectId = defectId;
+            document.querySelectorAll('.defect-card').forEach(card => {
+                card.style.background = card.classList.contains('critical') ? '#fee' : '#f8f9fa';
+            });
+            event.currentTarget.style.background = '#e3f2fd';
+            loadComments(defectId);
+        }
+
+        // Загрузка комментариев
+        async function loadComments(defectId) {
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/${defectId}/comments/`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const comments = await response.json();
+                    displayComments(comments);
+                    document.getElementById('commentsSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки комментариев:', error);
+            }
+        }
+
+        // Отображение комментариев
+        function displayComments(comments) {
+            const container = document.getElementById('commentsContainer');
+            
+            if (comments.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Комментариев пока нет</p>';
+                return;
+            }
+
+            container.innerHTML = comments.map(comment => `
+                <div class="comment">
+                    <div class="comment-header">
+                        <span class="comment-author">Пользователь #${comment.author_id}</span>
+                        <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                </div>
+            `).join('');
+        }
+
+        // Добавление комментария
+        document.getElementById('addCommentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!selectedDefectId) {
+                showError('Выберите дефект для добавления комментария');
+                return;
+            }
+
+            const commentText = document.getElementById('commentText').value;
+
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/${selectedDefectId}/comments/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify({ text: commentText })
+                });
+
+                if (response.ok) {
+                    document.getElementById('commentText').value = '';
+                    showSuccess('Комментарий добавлен!');
+                    loadComments(selectedDefectId);
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Ошибка при добавлении комментария');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
+
+        
+        // Утилиты
+        function getPriorityText(priority) {
+            const priorities = {
+                'low': 'Низкий',
+                'medium': 'Средний',
+                'high': 'Высокий',
+                'critical': 'Критический'
+            };
+            return priorities[priority] || priority;
+        }
+
+        function getStatusText(status) {
+            const statuses = {
+                'new': 'Новая',
+                'in_progress': 'В работе',
+                'under_review': 'На проверке',
+                'closed': 'Закрыта',
+                'cancelled': 'Отменена'
+            };
+            return statuses[status] || status;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

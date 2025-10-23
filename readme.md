@@ -4,6 +4,29 @@
 - менеджеров (назначение задач, контроль сроков, формирование отчётов);
 - руководителей и заказчиков (просмотр прогресса и отчётности).
 
--
--
--
+Основные сущности:
+
+Project - строительный объект
+Defect - проблемы на объекте
+Comment - обсуждение дефектов
+
+Роли и доступы (на основе job_title):
+engineer: создание дефектов, комментарии, смена статуса
+manager: создание объектов + всё что engineer
+seo (руководитель): все операции
+
+
+Проекты:
+GET    /projects/           # Список проектов
+POST   /projects/           # Создать проект (manager, seo)
+GET    /projects/{id}       # Детали проекта
+
+Дефекты (привязаны к проекту):
+GET    /projects/{id}/defects/            # Список дефектов проекта
+POST   /projects/{id}/defects/            # Создать дефект (engineer+)
+GET    /projects/{id}/defects/{defect_id} # Детали дефекта
+PUT    /projects/{id}/defects/{defect_id} # Обновить дефект
+
+Комментарии:
+GET    /projects/{id}/defects/{defect_id}/comments    # Список комментариев
+POST   /projects/{id}/defects/{defect_id}/comments    # Добавить комментарий
