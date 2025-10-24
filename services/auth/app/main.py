@@ -416,7 +416,7 @@ async def create_comment_api(
         db,
         text=comment.text,
         defect_id=defect_id,
-        author_id=current_user.id
+        author_id=current_user.name
     )
 
 @app.get("/api/projects/{project_id}/defects/{defect_id}/comments/", response_model=list[CommentResponse])

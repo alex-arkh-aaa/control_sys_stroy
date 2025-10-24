@@ -8,7 +8,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String, unique=True)
     email = Column(String, unique=True, index=True)
     age = Column(Integer)
     hashed_password = Column(String)
@@ -66,7 +66,7 @@ class Comment(Base):
     id = Column(Integer, primary_key=True, index=True)
     text = Column(Text, nullable=False)
     defect_id = Column(Integer, ForeignKey("defects.id"))
-    author_id = Column(Integer, ForeignKey("users.id"))
+    author_id = Column(String, ForeignKey("users.name"))
     created_at = Column(DateTime, default=func.now())
 
     defect = relationship("Defect", back_populates="comments")

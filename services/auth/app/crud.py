@@ -80,7 +80,7 @@ async def update_defect(db: AsyncSession, defect_id: int, **kwargs):
         await db.refresh(defect)
     return defect
 
-async def create_comment(db: AsyncSession, text: str, defect_id: int, author_id: int):
+async def create_comment(db: AsyncSession, text: str, defect_id: int, author_id: str):
     comment = Comment(text=text, defect_id=defect_id, author_id=author_id)
     db.add(comment)
     await db.commit()

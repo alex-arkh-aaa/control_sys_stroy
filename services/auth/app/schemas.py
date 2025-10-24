@@ -109,7 +109,7 @@ class CommentResponse(BaseModel):
     id: int
     text: str
     defect_id: int
-    author_id: int
+    author_id: str
     created_at: datetime
 
     class Config:

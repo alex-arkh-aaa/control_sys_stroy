@@ -621,7 +621,7 @@
             container.innerHTML = comments.map(comment => `
                 <div class="comment">
                     <div class="comment-header">
-                        <span class="comment-author">Пользователь #${comment.author_id}</span>
+                        <span class="comment-author">${comment.author_id}</span>
                         <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
                     </div>
                     <div class="comment-text">${comment.text}</div>
