@@ -445,19 +445,22 @@ async def read_users_api(
     authorization: str = Header(...)
 ):
     current_user = await get_current_user(authorization, db)
-    return await crud.get_users(db, skip=skip, limit=limit)
+    print(current_user)
+    ans = await crud.get_users(db, skip=skip, limit=limit)
+    print(ans)
+    return [current_user]   
 
-@app.get("/api/users/{user_id}", response_model=UserResponse)
-async def read_user_api(
-    user_id: int, 
-    db: AsyncSession = Depends(get_db),
-    authorization: str = Header(...)
-):
-    current_user = await get_current_user(authorization, db)
-    user = await crud.get_user(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+# @app.get("/api/users/{user_id}", response_model=UserResponse)
+# async def read_user_api(
+#     user_id: int,
+#     db: AsyncSession = Depends(get_db),
+#     authorization: str = Header(...)
+# ):
+#     current_user = await get_current_user(authorization, db)
+#     user = await crud.get_user(db, user_id)
+#     if not user:
+#         raise HTTPException(status_code=404, detail="User not found")
+#     return user
 
 # ==================== HTML СТРАНИЦЫ ====================
 

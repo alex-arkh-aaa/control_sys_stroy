@@ -184,6 +184,7 @@
                 <div><strong>Email:</strong> <span id="userEmail"></span></div>
                 <div><strong>Должность:</strong> <span id="userJob"></span></div>
             </div>
+            <button class="btn" style="display: block; text-align: center; margin: 10px 0; margin-top: 50px; width: 100%;" onclick="window.location.href='/'">К проектам</button>
         </div>
 
         <form id="loginForm">
@@ -213,7 +214,10 @@
         let currentToken = localStorage.getItem('auth_token');
 
         // Проверяем, есть ли уже токен
+        console.log(currentToken)
+        
         if (currentToken) {
+            console.log('123456789')
             checkAuthStatus();
         }
 
@@ -262,6 +266,8 @@
                 password: document.getElementById('password').value
             };
 
+            console.log(document.getElementById('email').value, '-----------------')
+
             try {
                 const response = await fetch('/token', {
                     method: 'POST',
@@ -272,12 +278,15 @@
                 });
 
                 const data = await response.json();
+                
+                console.log(response.status == 200)
+                console.log('2222222222222222')
 
-                if (response.ok) {
+                if (response.status) {
                     // Сохраняем токен
                     localStorage.setItem('auth_token', data.access_token);
                     currentToken = data.access_token;
-                    
+                    console.log('333333333333333333333')
                     showSuccess('Вход выполнен успешно!');
                     document.getElementById('loginForm').reset();
                     
@@ -285,17 +294,68 @@
                     await loadUserInfo();
                     
                     // Перенаправляем на главную страницу
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 1000);
+                    // setTimeout(() => {
+                    //     window.location.href = '/';
+                    // }, 1000);
                     
                 } else {
                     showError(data.detail || 'Ошибка при входе в систему');
                 }
+
+            //console.log(data)
             } catch (error) {
-                showError('Ошибка соединения с сервером');
+                showError('Ошибка с сервером', error);
             }
         });
+
+
+        async function loadUserInfo() {
+            try {
+                console.log('Загрузка информации о текущем пользователе...');
+                
+                const response = await fetch('/api/users/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                console.log('Статус ответа:', response.status);
+                
+                if (response.status === 200) {
+                    const users = await response.json();
+                    console.log('Получены пользователи:', users);
+                    
+                    if (users.length > 0) {
+                        const user = users[0]; // ВРЕМЕННО берем первого пользователя
+                        console.log('Текущий пользователь:', user);
+                        
+                        document.getElementById('userName').textContent = user.name;
+                        document.getElementById('userEmail').textContent = user.email;
+                        document.getElementById('userJob').textContent = getJobTitleText(user.job_title);
+                        
+                        // Показываем информацию о пользователе
+                        document.getElementById('userInfo').style.display = 'block';
+                        document.getElementById('logoutBtn').style.display = 'block';
+                        document.getElementById('loginForm').style.display = 'none';
+                    } else {
+                        console.error('Пользователи не найдены');
+                        showError('Пользователь не найден');
+                    }
+                } else {
+                    console.error('Ошибка сервера:', response.status);
+                    // Токен невалидный, удаляем его
+                    localStorage.removeItem('auth_token');
+                    currentToken = null;
+                    showError('Ошибка авторизации');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки пользователя:', error);
+                showError('Ошибка соединения с сервером');
+            }
+        }
+
 
         // Кнопка выхода
         document.getElementById('logoutBtn').addEventListener('click', async function() {
@@ -335,7 +395,7 @@
                     }
                 });
 
-                if (response.ok) {
+                if (response.status == 200) {
                     const users = await response.json();
                     // Берем первого пользователя (в реальном приложении нужно получить текущего пользователя)
                     if (users.length > 0) {
