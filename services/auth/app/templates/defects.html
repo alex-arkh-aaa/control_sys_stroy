@@ -115,6 +115,22 @@
             box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
         }
 
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
         .defects-container {
             display: grid;
             grid-template-columns: 1fr 400px;
@@ -334,6 +350,30 @@
             color: #555;
             line-height: 1.4;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -352,10 +392,6 @@
                     </div>
                     <a href="/" class="btn btn-secondary">← Назад к проектам</a>
                 </div>
-                <!-- <div class="actions">
-                    <button class="btn btn-success" onclick="showCreateDefectModal()">➕ Новый дефект</button>
-                    <button class="btn btn-secondary" onclick="logout()">🚪 Выйти</button>
-                </div> -->
             </div>
 
             <div id="errorMessage" class="error"></div>
@@ -372,6 +408,7 @@
                 <div id="emptyState" class="empty-state" style="display: none;">
                     <h3>Пока нет дефектов</h3>
                     <p>Создайте первый дефект чтобы начать работу</p>
+                    <button class="btn" onclick="showCreateDefectModal()">Создать дефект</button>
                 </div>
             </div>
 
@@ -422,11 +459,63 @@
         </div>
     </div>
 
+    <!-- Модальное окно редактирования дефекта -->
+    <div id="editDefectModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #333;">Редактировать дефект</h3>
+            <form id="editDefectForm">
+                <input type="hidden" id="editDefectId">
+                
+                <div class="form-group">
+                    <label for="editDefectTitle">Заголовок *</label>
+                    <input type="text" id="editDefectTitle" name="title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDefectDescription">Описание *</label>
+                    <textarea id="editDefectDescription" name="description" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDefectPriority">Приоритет</label>
+                    <select id="editDefectPriority" name="priority">
+                        <option value="low">Низкий</option>
+                        <option value="medium">Средний</option>
+                        <option value="high">Высокий</option>
+                        <option value="critical">Критический</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDefectStatus">Статус</label>
+                    <select id="editDefectStatus" name="status">
+                        <option value="new">Новая</option>
+                        <option value="in_progress">В работе</option>
+                        <option value="under_review">На проверке</option>
+                        <option value="closed">Закрыта</option>
+                        <option value="cancelled">Отменена</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="editDefectDueDate">Срок устранения</label>
+                    <input type="date" id="editDefectDueDate" name="due_date">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button type="submit" class="btn" style="flex: 1;">Сохранить изменения</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideEditDefectModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentToken = localStorage.getItem('auth_token');
         let currentProjectId = null;
         let currentUser = null;
         let selectedDefectId = null;
+        let currentEditingDefectId = null;
 
         // Загрузка при старте
         document.addEventListener('DOMContentLoaded', function() {
@@ -536,14 +625,102 @@
                                 Создан: ${new Date(defect.created_at).toLocaleDateString()}
                             </div>
                         </div>
-                        <div class="defect-priority priority-${defect.priority}">
-                            ${getPriorityText(defect.priority)}
+                        <div style="display: flex; gap: 10px; align-items: flex-start;">
+                            <div class="defect-priority priority-${defect.priority}">
+                                ${getPriorityText(defect.priority)}
+                            </div>
+                            <button class="btn-edit" onclick="event.stopPropagation(); showEditDefectModal(${defect.id})" 
+                                    title="Редактировать дефект">
+                                ✏️
+                            </button>
                         </div>
                     </div>
                     <div class="defect-description">${defect.description}</div>
                 </div>
             `).join('');
         }
+
+        // Показать модальное окно редактирования
+        function showEditDefectModal(defectId) {
+            currentEditingDefectId = defectId;
+            loadDefectData(defectId);
+            document.getElementById('editDefectModal').style.display = 'flex';
+        }
+
+        // Скрыть модальное окно редактирования
+        function hideEditDefectModal() {
+            document.getElementById('editDefectModal').style.display = 'none';
+            currentEditingDefectId = null;
+        }
+
+        // Загрузить данные дефекта для редактирования
+        async function loadDefectData(defectId) {
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/${defectId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const defect = await response.json();
+                    
+                    // Заполняем форму данными
+                    document.getElementById('editDefectId').value = defect.id;
+                    document.getElementById('editDefectTitle').value = defect.title;
+                    document.getElementById('editDefectDescription').value = defect.description;
+                    document.getElementById('editDefectPriority').value = defect.priority;
+                    document.getElementById('editDefectStatus').value = defect.status;
+                    
+                    if (defect.due_date) {
+                        const dueDate = new Date(defect.due_date).toISOString().split('T')[0];
+                        document.getElementById('editDefectDueDate').value = dueDate;
+                    } else {
+                        document.getElementById('editDefectDueDate').value = '';
+                    }
+                } else {
+                    showError('Ошибка загрузки данных дефекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        }
+
+        // Обработка формы редактирования
+        document.getElementById('editDefectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                title: document.getElementById('editDefectTitle').value,
+                description: document.getElementById('editDefectDescription').value,
+                priority: document.getElementById('editDefectPriority').value,
+                status: document.getElementById('editDefectStatus').value,
+                due_date: document.getElementById('editDefectDueDate').value || null
+            };
+
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/${currentEditingDefectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const updatedDefect = await response.json();
+                    showSuccess('Дефект успешно обновлен!');
+                    hideEditDefectModal();
+                    loadDefects(); // Перезагружаем список дефектов
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Ошибка при обновлении дефекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
 
         // Создание дефекта
         document.getElementById('createDefectForm').addEventListener('submit', async function(e) {
@@ -621,7 +798,7 @@
             container.innerHTML = comments.map(comment => `
                 <div class="comment">
                     <div class="comment-header">
-                        <span class="comment-author">${comment.author_id}</span>
+                        <span class="comment-author">Пользователь #${comment.author_id}</span>
                         <span class="comment-date">${new Date(comment.created_at).toLocaleString()}</span>
                     </div>
                     <div class="comment-text">${comment.text}</div>
@@ -663,7 +840,24 @@
             }
         });
 
-        
+        // Выход
+        async function logout() {
+            try {
+                await fetch('/logout', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login/';
+            } catch (error) {
+                console.error('Ошибка выхода:', error);
+            }
+        }
+
         // Утилиты
         function getPriorityText(priority) {
             const priorities = {
@@ -698,6 +892,14 @@
             successDiv.textContent = message;
             successDiv.style.display = 'block';
             document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Закрытие модальных окон по клику вне их
+        window.onclick = function(event) {
+            const editModal = document.getElementById('editDefectModal');
+            if (event.target === editModal) {
+                hideEditDefectModal();
+            }
         }
     </script>
 </body>

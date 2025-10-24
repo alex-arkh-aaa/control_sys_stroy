@@ -92,3 +92,16 @@ async def get_comments_by_defect(db: AsyncSession, defect_id: int, skip: int = 0
         select(Comment).where(Comment.defect_id == defect_id).offset(skip).limit(limit)
     )
     return result.scalars().all()
+
+
+
+
+async def update_project(db: AsyncSession, project_id: int, **kwargs):
+    project = await get_project(db, project_id)
+    if project:
+        for key, value in kwargs.items():
+            if value is not None:
+                setattr(project, key, value)
+        await db.commit()
+        await db.refresh(project)
+    return project

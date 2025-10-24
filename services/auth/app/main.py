@@ -135,160 +135,6 @@ async def logout(authorization: str = Header(...), current_user: User = Depends(
     
     return {"message": "Successfully logged out"}
 
-
-# # ==================== ПРОЕКТЫ ====================
-# @app.get("/", response_class=HTMLResponse)
-# async def projects_page(request: Request):
-#     return templates.TemplateResponse("projects.html", {"request": request})
-
-
-
-
-# @app.get("/api/projects/", response_model=list[ProjectResponse])
-# async def read_projects(
-#     skip: int = 0, 
-#     limit: int = 100, 
-#     db: AsyncSession = Depends(get_db),
-#     authorization: str = Header(...)
-# ):
-#     current_user = await get_current_user(authorization, db)
-#     return await crud.get_projects(db, skip=skip, limit=limit)
-
-# @app.post("/api/projects/", response_model=ProjectResponse)
-# async def create_project_api(
-#     project: ProjectCreate,
-#     db: AsyncSession = Depends(get_db),
-#     authorization: str = Header(...)
-# ):
-#     current_user = await get_current_user(authorization, db)
-#     check_create_project_permission(current_user)
-#     return await crud.create_project(
-#         db, 
-#         name=project.name,
-#         address=project.address,
-#         description=project.description,
-#         created_by=current_user.id
-#     )
-
-# @app.get("/api/projects/{project_id}", response_model=ProjectResponse)
-# async def read_project(
-#     project_id: int,
-#     db: AsyncSession = Depends(get_db),
-#     authorization: str = Header(...)
-# ):
-#     current_user = await get_current_user(authorization, db)
-#     await check_project_access(db, project_id, current_user)
-#     project = await crud.get_project(db, project_id)
-#     if not project:
-#         raise HTTPException(status_code=404, detail="Project not found")
-#     return project
-
-# # ==================== ДЕФЕКТЫ ====================
-# @app.get("/projects/{project_id}/defects-page/", response_class=HTMLResponse)
-# async def defects_page(request: Request, project_id: int):
-#     return templates.TemplateResponse("defects.html", {"request": request})
-
-
-# @app.get("/api/projects/{project_id}/defects/", response_model=list[DefectResponse])
-# async def read_defects_api(
-#     project_id: int,
-#     skip: int = 0,
-#     limit: int = 100,
-#     db: AsyncSession = Depends(get_db),
-#     authorization: str = Header(...)
-# ):
-#     current_user = await get_current_user(authorization, db)
-#     await check_project_access(db, project_id, current_user)
-#     return await crud.get_defects_by_project(db, project_id, skip=skip, limit=limit)
-
-# @app.post("/projects/{project_id}/defects/", response_model=DefectResponse)
-# async def create_defect(
-#     project_id: int,
-#     defect: DefectCreate,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     await check_project_access(db, project_id, current_user)
-#     return await crud.create_defect(
-#         db,
-#         title=defect.title,
-#         description=defect.description,
-#         project_id=project_id,
-#         author_id=current_user.id,
-#         priority=defect.priority,
-#         assignee_id=defect.assignee_id,
-#         due_date=defect.due_date
-#     )
-
-# @app.get("/projects/{project_id}/defects/{defect_id}", response_model=DefectResponse)
-# async def read_defect(
-#     project_id: int,
-#     defect_id: int,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     await check_project_access(db, project_id, current_user)
-#     defect = await crud.get_defect(db, defect_id)
-#     if not defect or defect.project_id != project_id:
-#         raise HTTPException(status_code=404, detail="Defect not found")
-#     return defect
-
-# @app.put("/projects/{project_id}/defects/{defect_id}", response_model=DefectResponse)
-# async def update_defect(
-#     project_id: int,
-#     defect_id: int,
-#     defect_update: DefectUpdate,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     await check_project_access(db, project_id, current_user)
-#     defect = await crud.get_defect(db, defect_id)
-#     if not defect or defect.project_id != project_id:
-#         raise HTTPException(status_code=404, detail="Defect not found")
-    
-#     check_edit_defect_permission(current_user, defect)
-    
-#     update_data = defect_update.dict(exclude_unset=True)
-#     return await crud.update_defect(db, defect_id, **update_data)
-
-# # ==================== КОММЕНТАРИИ ====================
-
-# @app.post("/projects/{project_id}/defects/{defect_id}/comments/", response_model=CommentResponse)
-# async def create_comment(
-#     project_id: int,
-#     defect_id: int,
-#     comment: CommentCreate,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     await check_project_access(db, project_id, current_user)
-#     defect = await crud.get_defect(db, defect_id)
-#     if not defect or defect.project_id != project_id:
-#         raise HTTPException(status_code=404, detail="Defect not found")
-    
-#     return await crud.create_comment(
-#         db,
-#         text=comment.text,
-#         defect_id=defect_id,
-#         author_id=current_user.id
-#     )
-
-# @app.get("/projects/{project_id}/defects/{defect_id}/comments/", response_model=list[CommentResponse])
-# async def read_comments(
-#     project_id: int,
-#     defect_id: int,
-#     skip: int = 0,
-#     limit: int = 100,
-#     db: AsyncSession = Depends(get_db),
-#     current_user: User = Depends(get_current_user)
-# ):
-#     await check_project_access(db, project_id, current_user)
-#     defect = await crud.get_defect(db, defect_id)
-#     if not defect or defect.project_id != project_id:
-#         raise HTTPException(status_code=404, detail="Defect not found")
-    
-#     return await crud.get_comments_by_defect(db, defect_id, skip=skip, limit=limit)
-
 # ==================== API ЭНДПОИНТЫ ====================
 
 # Projects API
@@ -482,7 +328,32 @@ async def show_login_form(request: Request):
 
 
 
-
+@app.put("/api/projects/{project_id}", response_model=ProjectResponse)
+async def update_project_api(
+    project_id: int,
+    project_update: ProjectUpdate,
+    db: AsyncSession = Depends(get_db),
+    authorization: str = Header(...)
+):
+    current_user = await get_current_user(authorization, db)
+    
+    # Проверяем права доступа
+    if current_user.job_title not in ["manager", "seo"]:
+        raise HTTPException(
+            status_code=403, 
+            detail="Только менеджеры и руководители могут редактировать проекты"
+        )
+    
+    # Находим проект
+    project = await crud.get_project(db, project_id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    
+    # Обновляем проект
+    update_data = project_update.dict(exclude_unset=True)
+    updated_project = await crud.update_project(db, project_id, **update_data)
+    
+    return updated_project
 
 
 

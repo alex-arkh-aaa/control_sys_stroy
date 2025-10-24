@@ -108,6 +108,22 @@
             box-shadow: 0 10px 20px rgba(108, 117, 125, 0.3);
         }
 
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+            transform: translateY(-1px);
+        }
+
         .projects-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -130,7 +146,7 @@
 
         .project-header {
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 15px;
         }
@@ -342,9 +358,40 @@
         </div>
     </div>
 
+    <!-- Модальное окно редактирования проекта -->
+    <div id="editProjectModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px; color: #333;">Редактировать проект</h3>
+            <form id="editProjectForm">
+                <input type="hidden" id="editProjectId">
+                
+                <div class="form-group">
+                    <label for="editProjectName">Название проекта *</label>
+                    <input type="text" id="editProjectName" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editProjectAddress">Адрес *</label>
+                    <input type="text" id="editProjectAddress" name="address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="editProjectDescription">Описание</label>
+                    <textarea id="editProjectDescription" name="description"></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 25px;">
+                    <button type="submit" class="btn" style="flex: 1;">Сохранить изменения</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideEditProjectModal()">Отмена</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
         let currentToken = localStorage.getItem('auth_token');
         let currentUser = null;
+        let currentEditingProjectId = null;
 
         // Загрузка при старте
         document.addEventListener('DOMContentLoaded', function() {
@@ -355,29 +402,6 @@
             loadUserInfo();
             loadProjects();
         });
-
-        // // Загрузка информации о пользователе
-        // async function loadUserInfo() {
-        //     try {
-        //         const response = await fetch('/api/users/', {
-        //             headers: {
-        //                 'Authorization': `Bearer ${currentToken}`
-        //             }
-        //         });
-
-        //         if (response.ok) {
-        //             const users = await response.json();
-        //             if (users.length > 0) {
-        //                 currentUser = users[0];
-        //                 document.getElementById('userName').textContent = currentUser.name;
-        //                 document.getElementById('userEmail').textContent = currentUser.email;
-        //                 document.getElementById('userRole').textContent = getRoleText(currentUser.job_title);
-        //             }
-        //         }
-        //     } catch (error) {
-        //         console.error('Ошибка загрузки пользователя:', error);
-        //     }
-        // }
 
         // Загрузка информации о пользователе
         async function loadUserInfo() {
@@ -460,12 +484,94 @@
                             <div class="project-title">${project.name}</div>
                             <div class="project-address">📍 ${project.address}</div>
                         </div>
+                        <button class="btn-edit" onclick="event.stopPropagation(); showEditProjectModal(${project.id})" 
+                                title="Редактировать проект">
+                            ✏️
+                        </button>
                     </div>
                     <div class="project-description">${project.description || 'Описание отсутствует'}</div>
                     
                 </div>
             `).join('');
         }
+
+        // Показать модальное окно редактирования проекта
+        function showEditProjectModal(projectId) {
+            // Проверяем права доступа
+            if (currentUser && !['manager', 'seo'].includes(currentUser.job_title)) {
+                showError('Только менеджеры и руководители могут редактировать проекты');
+                return;
+            }
+            
+            currentEditingProjectId = projectId;
+            loadProjectData(projectId);
+            document.getElementById('editProjectModal').style.display = 'flex';
+        }
+
+        // Скрыть модальное окно редактирования
+        function hideEditProjectModal() {
+            document.getElementById('editProjectModal').style.display = 'none';
+            currentEditingProjectId = null;
+        }
+
+        // Загрузить данные проекта для редактирования
+        async function loadProjectData(projectId) {
+            try {
+                const response = await fetch(`/api/projects/${projectId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const project = await response.json();
+                    
+                    // Заполняем форму данными
+                    document.getElementById('editProjectId').value = project.id;
+                    document.getElementById('editProjectName').value = project.name;
+                    document.getElementById('editProjectAddress').value = project.address;
+                    document.getElementById('editProjectDescription').value = project.description || '';
+                } else {
+                    showError('Ошибка загрузки данных проекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        }
+
+        // Обработка формы редактирования проекта
+        document.getElementById('editProjectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('editProjectName').value,
+                address: document.getElementById('editProjectAddress').value,
+                description: document.getElementById('editProjectDescription').value
+            };
+
+            try {
+                const response = await fetch(`/api/projects/${currentEditingProjectId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentToken}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const updatedProject = await response.json();
+                    showSuccess('Проект успешно обновлен!');
+                    hideEditProjectModal();
+                    loadProjects(); // Перезагружаем список проектов
+                } else {
+                    const error = await response.json();
+                    showError(error.detail || 'Ошибка при обновлении проекта');
+                }
+            } catch (error) {
+                showError('Ошибка соединения с сервером');
+            }
+        });
 
         // Создание проекта
         document.getElementById('createProjectForm').addEventListener('submit', async function(e) {
@@ -570,11 +676,16 @@
             document.getElementById('errorMessage').style.display = 'none';
         }
 
-        // Закрытие модального окна по клику вне его
+        // Закрытие модальных окон по клику вне их
         window.onclick = function(event) {
-            const modal = document.getElementById('createProjectModal');
-            if (event.target === modal) {
+            const createModal = document.getElementById('createProjectModal');
+            const editModal = document.getElementById('editProjectModal');
+            
+            if (event.target === createModal) {
                 hideCreateProjectModal();
+            }
+            if (event.target === editModal) {
+                hideEditProjectModal();
             }
         }
     </script>

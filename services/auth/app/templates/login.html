@@ -214,10 +214,8 @@
         let currentToken = localStorage.getItem('auth_token');
 
         // Проверяем, есть ли уже токен
-        console.log(currentToken)
         
         if (currentToken) {
-            console.log('123456789')
             checkAuthStatus();
         }
 
@@ -266,7 +264,6 @@
                 password: document.getElementById('password').value
             };
 
-            console.log(document.getElementById('email').value, '-----------------')
 
             try {
                 const response = await fetch('/token', {
@@ -278,15 +275,11 @@
                 });
 
                 const data = await response.json();
-                
-                console.log(response.status == 200)
-                console.log('2222222222222222')
-
+            
                 if (response.status) {
                     // Сохраняем токен
                     localStorage.setItem('auth_token', data.access_token);
                     currentToken = data.access_token;
-                    console.log('333333333333333333333')
                     showSuccess('Вход выполнен успешно!');
                     document.getElementById('loginForm').reset();
                     
@@ -302,7 +295,6 @@
                     showError(data.detail || 'Ошибка при входе в систему');
                 }
 
-            //console.log(data)
             } catch (error) {
                 showError('Ошибка с сервером', error);
             }
@@ -311,7 +303,6 @@
 
         async function loadUserInfo() {
             try {
-                console.log('Загрузка информации о текущем пользователе...');
                 
                 const response = await fetch('/api/users/', {
                     method: 'GET',
@@ -320,15 +311,12 @@
                     }
                 });
 
-                console.log('Статус ответа:', response.status);
                 
                 if (response.status === 200) {
                     const users = await response.json();
-                    console.log('Получены пользователи:', users);
                     
                     if (users.length > 0) {
                         const user = users[0]; // ВРЕМЕННО берем первого пользователя
-                        console.log('Текущий пользователь:', user);
                         
                         document.getElementById('userName').textContent = user.name;
                         document.getElementById('userEmail').textContent = user.email;
