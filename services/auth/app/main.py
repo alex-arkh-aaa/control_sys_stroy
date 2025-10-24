@@ -79,10 +79,6 @@ async def delete_user(user_creds: UserCreds, db: AsyncSession = Depends(get_db))
     
     return {"message": "User deleted"}
 
-# @app.get("/register/", response_class=HTMLResponse)
-# async def show_registration_form(request: Request):
-#     return templates.TemplateResponse("registration.html", {"request": request})
-
 @app.post("/register/")
 async def register_user(user: User, db: AsyncSession = Depends(get_db)):
     existing_user = await crud.get_user_by_email(db, user.email)
@@ -95,7 +91,6 @@ async def register_user(user: User, db: AsyncSession = Depends(get_db)):
     message = 'Поздравляем Вас с началом работы в Control System!'
     data = {"email": new_user.email, "message": message, "full_name": new_user.name,  "subject": 'Успешная регистрация!'}
     ans = await send_notification(data)
-    print(ans)
 
     return {"msg": "Пользователь успешно зарегистрирован", 'user': new_user}
 
@@ -156,6 +151,11 @@ async def create_project_api(
 ):
     current_user = await get_current_user(authorization, db)
     check_create_project_permission(current_user)
+
+    message = str(f'Вы создали новый проект: {project.name} по адресу: {project.address}')
+    data = {"email": current_user.email, "message": message, "full_name": current_user.name,  "subject": 'Создание нового проекта!'}
+    await send_notification(data)
+
     return await crud.create_project(
         db, 
         name=project.name,
@@ -199,6 +199,12 @@ async def create_defect_api(
 ):
     current_user = await get_current_user(authorization, db)
     await check_project_access(db, project_id, current_user)
+
+    message = str(f'Вы создали новый дефект: {defect.title} для проекта №{project_id}\nСпасибо за работу в Control System')
+    data = {"email": current_user.email, "message": message, "full_name": current_user.name,  "subject": 'Создание нового дефекта!'}
+    await send_notification(data)
+
+
     return await crud.create_defect(
         db,
         title=defect.title,

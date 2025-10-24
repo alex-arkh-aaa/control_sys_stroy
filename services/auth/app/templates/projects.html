@@ -250,6 +250,7 @@
         }
 
         .modal-content {
+            position: relative;
             background: white;
             border-radius: 15px;
             padding: 30px;
@@ -260,6 +261,42 @@
 
         .form-group {
             margin-bottom: 20px;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         label {
@@ -334,6 +371,12 @@
     <div id="createProjectModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px; color: #333;">Создать новый проект</h3>
+
+            <div id="createProjectLoading" class="loading-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <div class="loading-text">Создание проекта...</div>
+            </div>
+
             <form id="createProjectForm">
                 <div class="form-group">
                     <label for="projectName">Название проекта *</label>
@@ -351,7 +394,7 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button type="submit" class="btn" style="flex: 1;">Создать проект</button>
+                    <button type="submit" class="btn" id="createProjectBtn" style="flex: 1;">Создать проект</button>
                     <button type="button" class="btn btn-secondary" onclick="hideCreateProjectModal()">Отмена</button>
                 </div>
             </form>
@@ -362,6 +405,12 @@
     <div id="editProjectModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px; color: #333;">Редактировать проект</h3>
+
+            <div id="editProjectLoading" class="loading-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <div class="loading-text">Сохранение изменений...</div>
+            </div>
+
             <form id="editProjectForm">
                 <input type="hidden" id="editProjectId">
                 
@@ -381,7 +430,7 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button type="submit" class="btn" style="flex: 1;">Сохранить изменения</button>
+                    <button type="submit" class="btn" id="editProjectBtn" style="flex: 1;">Сохранить изменения</button>
                     <button type="button" class="btn btn-secondary" onclick="hideEditProjectModal()">Отмена</button>
                 </div>
             </form>
@@ -539,6 +588,41 @@
             }
         }
 
+        // Функции для управления спиннерами
+        function showCreateProjectLoading(show) {
+            const loadingOverlay = document.getElementById('createProjectLoading');
+            const submitBtn = document.getElementById('createProjectBtn');
+            
+            if (!loadingOverlay || !submitBtn) return;
+            
+            if (show) {
+                loadingOverlay.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Создание...';
+            } else {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Создать проект';
+            }
+        }
+
+        function showEditProjectLoading(show) {
+            const loadingOverlay = document.getElementById('editProjectLoading');
+            const submitBtn = document.getElementById('editProjectBtn');
+            
+            if (!loadingOverlay || !submitBtn) return;
+            
+            if (show) {
+                loadingOverlay.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Сохранение...';
+            } else {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Сохранить изменения';
+            }
+        }
+
         // Обработка формы редактирования проекта
         document.getElementById('editProjectForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -548,6 +632,9 @@
                 address: document.getElementById('editProjectAddress').value,
                 description: document.getElementById('editProjectDescription').value
             };
+
+            // Показываем спиннер
+            showEditProjectLoading(true);
 
             try {
                 const response = await fetch(`/api/projects/${currentEditingProjectId}`, {
@@ -563,13 +650,15 @@
                     const updatedProject = await response.json();
                     showSuccess('Проект успешно обновлен!');
                     hideEditProjectModal();
-                    loadProjects(); // Перезагружаем список проектов
+                    loadProjects();
                 } else {
                     const error = await response.json();
                     showError(error.detail || 'Ошибка при обновлении проекта');
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
+            } finally {
+                showEditProjectLoading(false);
             }
         });
 
@@ -582,6 +671,9 @@
                 address: document.getElementById('projectAddress').value,
                 description: document.getElementById('projectDescription').value
             };
+
+            // Показываем спиннер
+            showCreateProjectLoading(true);
 
             try {
                 const response = await fetch('/api/projects/', {
@@ -605,6 +697,8 @@
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
+            } finally {
+                showCreateProjectLoading(false);
             }
         });
 
@@ -623,17 +717,13 @@
                     }
                 });
                 
-                // ОЧИЩАЕМ все данные
                 localStorage.removeItem('auth_token');
                 currentToken = null;
                 currentUser = null;
-                
-                // Принудительно переходим на страницу входа
                 window.location.href = '/login/';
                 
             } catch (error) {
                 console.error('Ошибка выхода:', error);
-                // Все равно очищаем и переходим
                 localStorage.removeItem('auth_token');
                 window.location.href = '/login/';
             }

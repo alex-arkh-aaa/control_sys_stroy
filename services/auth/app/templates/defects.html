@@ -365,6 +365,7 @@
         }
 
         .modal-content {
+            position: relative;
             background: white;
             border-radius: 15px;
             padding: 30px;
@@ -373,6 +374,42 @@
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             max-height: 90vh;
             overflow-y: auto;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -408,13 +445,18 @@
                 <div id="emptyState" class="empty-state" style="display: none;">
                     <h3>Пока нет дефектов</h3>
                     <p>Создайте первый дефект чтобы начать работу</p>
-                    <button class="btn" onclick="showCreateDefectModal()">Создать дефект</button>
                 </div>
             </div>
 
             <!-- Сайдбар с формой создания дефекта -->
             <div class="defects-sidebar">
                 <h3 class="section-title">Создать дефект</h3>
+                
+                <div id="createDefectLoading" class="loading-overlay" style="display: none;">
+                    <div class="spinner"></div>
+                    <div class="loading-text">Создание дефекта...</div>
+                </div>
+
                 <form id="createDefectForm">
                     <div class="form-group">
                         <label for="defectTitle">Заголовок *</label>
@@ -441,18 +483,24 @@
                         <input type="date" id="defectDueDate" name="due_date">
                     </div>
 
-                    <button type="submit" class="btn" style="width: 100%;">Создать дефект</button>
+                    <button type="submit" class="btn" id="createDefectBtn" style="width: 100%;">Создать дефект</button>
                 </form>
 
                 <!-- Секция комментариев для выбранного дефекта -->
                 <div id="commentsSection" class="comments-section" style="display: none;">
                     <h3 class="section-title">Комментарии</h3>
                     <div id="commentsContainer"></div>
+                    
+                    <div id="addCommentLoading" class="loading-overlay" style="display: none; position: relative; height: 60px; margin-top: 15px;">
+                        <div class="spinner" style="width: 30px; height: 30px;"></div>
+                        <div class="loading-text" style="font-size: 14px;">Добавление комментария...</div>
+                    </div>
+
                     <form id="addCommentForm" style="margin-top: 15px;">
                         <div class="form-group">
                             <textarea id="commentText" placeholder="Добавить комментарий..." required></textarea>
                         </div>
-                        <button type="submit" class="btn" style="width: 100%;">Добавить комментарий</button>
+                        <button type="submit" class="btn" id="addCommentBtn" style="width: 100%;">Добавить комментарий</button>
                     </form>
                 </div>
             </div>
@@ -463,6 +511,12 @@
     <div id="editDefectModal" class="modal">
         <div class="modal-content">
             <h3 style="margin-bottom: 20px; color: #333;">Редактировать дефект</h3>
+
+            <div id="editDefectLoading" class="loading-overlay" style="display: none;">
+                <div class="spinner"></div>
+                <div class="loading-text">Сохранение изменений...</div>
+            </div>
+
             <form id="editDefectForm">
                 <input type="hidden" id="editDefectId">
                 
@@ -503,7 +557,7 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
-                    <button type="submit" class="btn" style="flex: 1;">Сохранить изменения</button>
+                    <button type="submit" class="btn" id="editDefectBtn" style="flex: 1;">Сохранить изменения</button>
                     <button type="button" class="btn btn-secondary" onclick="hideEditDefectModal()">Отмена</button>
                 </div>
             </form>
@@ -640,6 +694,58 @@
             `).join('');
         }
 
+        // Функции для управления спиннерами
+        function showCreateDefectLoading(show) {
+            const loadingOverlay = document.getElementById('createDefectLoading');
+            const submitBtn = document.getElementById('createDefectBtn');
+            
+            if (!loadingOverlay || !submitBtn) return;
+            
+            if (show) {
+                loadingOverlay.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Создание...';
+            } else {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Создать дефект';
+            }
+        }
+
+        function showEditDefectLoading(show) {
+            const loadingOverlay = document.getElementById('editDefectLoading');
+            const submitBtn = document.getElementById('editDefectBtn');
+            
+            if (!loadingOverlay || !submitBtn) return;
+            
+            if (show) {
+                loadingOverlay.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Сохранение...';
+            } else {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Сохранить изменения';
+            }
+        }
+
+        function showAddCommentLoading(show) {
+            const loadingOverlay = document.getElementById('addCommentLoading');
+            const submitBtn = document.getElementById('addCommentBtn');
+            
+            if (!loadingOverlay || !submitBtn) return;
+            
+            if (show) {
+                loadingOverlay.style.display = 'flex';
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Добавление...';
+            } else {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Добавить комментарий';
+            }
+        }
+
         // Показать модальное окно редактирования
         function showEditDefectModal(defectId) {
             currentEditingDefectId = defectId;
@@ -698,6 +804,9 @@
                 due_date: document.getElementById('editDefectDueDate').value || null
             };
 
+            // Показываем спиннер
+            showEditDefectLoading(true);
+
             try {
                 const response = await fetch(`/api/projects/${currentProjectId}/defects/${currentEditingDefectId}`, {
                     method: 'PUT',
@@ -719,6 +828,9 @@
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
+            } finally {
+                // Всегда скрываем спиннер
+                showEditDefectLoading(false);
             }
         });
 
@@ -732,6 +844,9 @@
                 priority: document.getElementById('defectPriority').value,
                 due_date: document.getElementById('defectDueDate').value || null
             };
+
+            // Показываем спиннер
+            showCreateDefectLoading(true);
 
             try {
                 const response = await fetch(`/api/projects/${currentProjectId}/defects/`, {
@@ -754,6 +869,9 @@
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
+            } finally {
+                // Всегда скрываем спиннер
+                showCreateDefectLoading(false);
             }
         });
 
@@ -817,6 +935,9 @@
 
             const commentText = document.getElementById('commentText').value;
 
+            // Показываем спиннер
+            showAddCommentLoading(true);
+
             try {
                 const response = await fetch(`/api/projects/${currentProjectId}/defects/${selectedDefectId}/comments/`, {
                     method: 'POST',
@@ -837,6 +958,9 @@
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
+            } finally {
+                // Всегда скрываем спиннер
+                showAddCommentLoading(false);
             }
         });
 
