@@ -70,3 +70,23 @@ class Comment(Base):
     created_at = Column(DateTime, default=func.now())
 
     defect = relationship("Defect", back_populates="comments")
+
+
+
+class ProjectHistory(Base):
+    __tablename__ = "project_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"))
+    defect_id = Column(Integer, ForeignKey("defects.id"))
+    changed_by = Column(Integer, ForeignKey("users.id"))
+    change_type = Column(String, nullable=False)  # 'defect_created', 'defect_updated'
+    field_name = Column(String)                   # Название измененного поля
+    old_value = Column(Text)                      # Старое значение
+    new_value = Column(Text)                      # Новое значение
+    change_date = Column(DateTime, default=func.now())
+    
+    # Связи
+    project = relationship("Project")
+    defect = relationship("Defect")
+    user = relationship("User")

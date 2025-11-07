@@ -120,3 +120,22 @@ class ProjectUpdate(BaseModel):
     name: Optional[str] = None
     address: Optional[str] = None
     description: Optional[str] = None
+
+
+class ProjectHistoryResponse(BaseModel):
+    id: int
+    project_id: int
+    defect_id: int
+    changed_by: int
+    change_type: str
+    field_name: Optional[str]
+    old_value: Optional[str]
+    new_value: Optional[str]
+    change_date: datetime
+    defect: Optional[DefectResponse] = None
+    user: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True
+
+        

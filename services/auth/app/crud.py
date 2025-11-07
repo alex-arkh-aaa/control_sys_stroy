@@ -1,6 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from .models import *
+import json
+from datetime import datetime
 
 
 async def create_user(db: AsyncSession, name: str, email: str, age: int, hashed_password: str, job_title: str):
@@ -105,3 +107,6 @@ async def update_project(db: AsyncSession, project_id: int, **kwargs):
         await db.commit()
         await db.refresh(project)
     return project
+
+
+

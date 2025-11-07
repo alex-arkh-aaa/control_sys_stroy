@@ -194,6 +194,8 @@ async def create_defect_api(
     db: AsyncSession = Depends(get_db),
     authorization: str = Header(...)
 ):
+    
+    
     current_user = await get_current_user(authorization, db)
     await check_project_access(db, project_id, current_user)
 
