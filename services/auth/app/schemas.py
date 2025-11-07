@@ -138,4 +138,18 @@ class ProjectHistoryResponse(BaseModel):
     class Config:
         from_attributes = True
 
-        
+
+
+class DefectHistoryResponse(BaseModel):
+    id: int
+    defect_id: int
+    changed_by: int
+    change_type: str
+    field_name: Optional[str]
+    old_value: Optional[str]
+    new_value: Optional[str]
+    change_date: datetime
+    user: Optional[UserResponse] = None
+
+    class Config:
+        from_attributes = True

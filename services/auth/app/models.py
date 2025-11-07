@@ -90,3 +90,21 @@ class ProjectHistory(Base):
     project = relationship("Project")
     defect = relationship("Defect")
     user = relationship("User")
+
+
+class DefectHistory(Base):
+    __tablename__ = "defect_history"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    defect_id = Column(Integer, ForeignKey("defects.id"), nullable=False)
+    changed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    change_type = Column(String, nullable=False)  # 'created', 'updated', 'status_changed', etc.
+    field_name = Column(String)                   # Название измененного поля
+    old_value = Column(Text)                      # Старое значение
+    new_value = Column(Text)                      # Новое значение
+    change_date = Column(DateTime, default=func.now())
+    
+    # Связи
+    defect = relationship("Defect")
+    user = relationship("User")
+

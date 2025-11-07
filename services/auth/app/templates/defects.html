@@ -11,6 +11,15 @@
             box-sizing: border-box;
         }
 
+        .btn-export {
+            background: #28a745;
+        }
+
+        .btn-export:hover {
+            background: #218838;
+            box-shadow: 0 10px 20px rgba(40, 167, 69, 0.3);
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -142,6 +151,9 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 25px;
+            display: flex;
+            flex-direction: column;
+            height: 120vh;
         }
 
         .defects-sidebar {
@@ -150,21 +162,50 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             padding: 25px;
             height: fit-content;
+            max-height: 120vh;
+            overflow-y: auto;
+        }
+
+        .defects-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .sort-select {
+            min-width: 180px;
+        }
+
+        .defects-scroll-container {
+            flex: 1;
+            overflow-y: auto;
+            border: 1px solid #e1e5e9;
+            border-radius: 10px;
+            padding: 15px;
+            background: #f8f9fa;
         }
 
         .defect-card {
-            background: #f8f9fa;
+            background: white;
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 15px;
             border-left: 4px solid #667eea;
             cursor: pointer;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .defect-card:hover {
             background: #e9ecef;
             transform: translateX(5px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
 
         .defect-card.critical {
@@ -240,6 +281,10 @@
             color: #555;
             font-size: 14px;
             line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         .empty-state {
@@ -411,6 +456,55 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .history-section {
+            margin-top: 30px;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid #667eea;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .history-user {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .history-date {
+            color: #666;
+        }
+
+        .history-change {
+            color: #555;
+            line-height: 1.4;
+        }
+
+        .history-type {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            background: #667eea;
+            color: white;
+            margin-right: 8px;
+        }
+
+        .history-type.created { background: #28a745; }
+        .history-type.updated { background: #ffc107; color: #212529; }
+        .history-type.status_changed { background: #17a2b8; }
     </style>
 </head>
 <body>
@@ -428,6 +522,7 @@
                         <div class="project-address" id="projectAddress"></div>
                     </div>
                     <a href="/" class="btn btn-secondary">← Назад к проектам</a>
+                    <button class="btn btn-success" onclick="exportToCSV()">📊 Экспорт в CSV</button>
                 </div>
             </div>
 
@@ -439,12 +534,33 @@
             <!-- Основной список дефектов -->
             <div class="defects-list">
                 <h3 class="section-title">Дефекты проекта</h3>
-                <div id="defectsContainer">
-                    <!-- Дефекты будут загружены здесь -->
+                
+                <!-- Панель управления -->
+                <div class="defects-controls">
+                    <div class="form-group search-box">
+                        <input type="text" id="searchDefects" placeholder="Поиск по названию..." style="margin: 0;">
+                    </div>
+                    <div class="form-group sort-select">
+                        <select id="sortDefects">
+                            <option value="priority-desc">Приоритет (высокий → низкий)</option>
+                            <option value="priority-asc">Приоритет (низкий → высокий)</option>
+                            <option value="date-desc">Дата (новые → старые)</option>
+                            <option value="date-asc">Дата (старые → новые)</option>
+                            <option value="title-asc">Название (А-Я)</option>
+                            <option value="title-desc">Название (Я-А)</option>
+                        </select>
+                    </div>
                 </div>
-                <div id="emptyState" class="empty-state" style="display: none;">
-                    <h3>Пока нет дефектов</h3>
-                    <p>Создайте первый дефект чтобы начать работу</p>
+
+                <!-- Прокручиваемый контейнер для дефектов -->
+                <div class="defects-scroll-container" id="defectsScrollContainer">
+                    <div id="defectsContainer">
+                        <!-- Дефекты будут загружены здесь -->
+                    </div>
+                    <div id="emptyState" class="empty-state" style="display: none;">
+                        <h3>Пока нет дефектов</h3>
+                        <p>Создайте первый дефект чтобы начать работу</p>
+                    </div>
                 </div>
             </div>
 
@@ -502,6 +618,10 @@
                         </div>
                         <button type="submit" class="btn" id="addCommentBtn" style="width: 100%;">Добавить комментарий</button>
                     </form>
+                </div>
+                <div id="historySection" class="history-section" style="display: none; margin-top: 30px;">
+                    <h3 class="section-title">История изменений</h3>
+                    <div id="historyContainer"></div>
                 </div>
             </div>
         </div>
@@ -570,6 +690,7 @@
         let currentUser = null;
         let selectedDefectId = null;
         let currentEditingDefectId = null;
+        let allDefects = []; // Храним все дефекты для фильтрации и сортировки
 
         // Загрузка при старте
         document.addEventListener('DOMContentLoaded', function() {
@@ -587,6 +708,10 @@
             loadUserInfo();
             loadProjectInfo();
             loadDefects();
+
+            // Добавляем обработчики для поиска и сортировки
+            document.getElementById('searchDefects').addEventListener('input', filterAndSortDefects);
+            document.getElementById('sortDefects').addEventListener('change', filterAndSortDefects);
         });
 
         // Получение ID проекта из URL
@@ -646,13 +771,59 @@
 
                 if (response.ok) {
                     const defects = await response.json();
-                    displayDefects(defects);
+                    allDefects = defects; // Сохраняем все дефекты
+                    filterAndSortDefects(); // Применяем фильтрацию и сортировку
                 } else {
                     showError('Ошибка загрузки дефектов');
                 }
             } catch (error) {
                 showError('Ошибка соединения с сервером');
             }
+        }
+
+        // Фильтрация и сортировка дефектов
+        function filterAndSortDefects() {
+            const searchTerm = document.getElementById('searchDefects').value.toLowerCase();
+            const sortOption = document.getElementById('sortDefects').value;
+
+            // Фильтрация
+            let filteredDefects = allDefects.filter(defect => 
+                defect.title.toLowerCase().includes(searchTerm) ||
+                defect.description.toLowerCase().includes(searchTerm)
+            );
+
+            // Сортировка
+            filteredDefects.sort((a, b) => {
+                switch (sortOption) {
+                    case 'priority-desc':
+                        return getPriorityWeight(b.priority) - getPriorityWeight(a.priority);
+                    case 'priority-asc':
+                        return getPriorityWeight(a.priority) - getPriorityWeight(b.priority);
+                    case 'date-desc':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    case 'date-asc':
+                        return new Date(a.created_at) - new Date(b.created_at);
+                    case 'title-asc':
+                        return a.title.localeCompare(b.title);
+                    case 'title-desc':
+                        return b.title.localeCompare(a.title);
+                    default:
+                        return 0;
+                }
+            });
+
+            displayDefects(filteredDefects);
+        }
+
+        // Вес приоритета для сортировки
+        function getPriorityWeight(priority) {
+            const weights = {
+                'critical': 4,
+                'high': 3,
+                'medium': 2,
+                'low': 1
+            };
+            return weights[priority] || 0;
         }
 
         // Отображение дефектов
@@ -670,7 +841,7 @@
             emptyState.style.display = 'none';
 
             container.innerHTML = defects.map(defect => `
-                <div class="defect-card ${defect.priority}" onclick="selectDefect(${defect.id})">
+                <div class="defect-card ${defect.priority}" onclick="selectDefect(${defect.id})" data-defect-id="${defect.id}">
                     <div class="defect-header">
                         <div style="flex: 1;">
                             <div class="defect-title">${defect.title}</div>
@@ -692,6 +863,14 @@
                     <div class="defect-description">${defect.description}</div>
                 </div>
             `).join('');
+
+            // Восстанавливаем выделение выбранного дефекта
+            if (selectedDefectId) {
+                const selectedCard = container.querySelector(`[data-defect-id="${selectedDefectId}"]`);
+                if (selectedCard) {
+                    selectedCard.style.background = '#e3f2fd';
+                }
+            }
         }
 
         // Функции для управления спиннерами
@@ -878,11 +1057,30 @@
         // Выбор дефекта
         function selectDefect(defectId) {
             selectedDefectId = defectId;
+            
+            // Сброс выделения
             document.querySelectorAll('.defect-card').forEach(card => {
-                card.style.background = card.classList.contains('critical') ? '#fee' : '#f8f9fa';
+                const priority = card.classList.contains('critical') ? 'critical' : 
+                               card.classList.contains('high') ? 'high' :
+                               card.classList.contains('medium') ? 'medium' : 'low';
+                card.style.background = getDefaultBackground(priority);
             });
+            
+            // Выделение выбранного
             event.currentTarget.style.background = '#e3f2fd';
             loadComments(defectId);
+            loadHistory(defectId);
+        }
+
+        // Получение фона по умолчанию для приоритета
+        function getDefaultBackground(priority) {
+            const backgrounds = {
+                'critical': '#fee',
+                'high': '#fff3cd',
+                'medium': '#f8f9fa',
+                'low': '#efe'
+            };
+            return backgrounds[priority] || '#f8f9fa';
         }
 
         // Загрузка комментариев
@@ -1024,6 +1222,189 @@
             if (event.target === editModal) {
                 hideEditDefectModal();
             }
+        }
+
+        async function loadHistory(defectId) {
+            try {
+                const response = await fetch(`/api/projects/${currentProjectId}/defects/${defectId}/history/`, {
+                    headers: {
+                        'Authorization': `Bearer ${currentToken}`
+                    }
+                });
+
+                if (response.ok) {
+                    const history = await response.json();
+                    displayHistory(history);
+                    document.getElementById('historySection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки истории:', error);
+            }
+        }
+
+        // Отображение истории
+        function displayHistory(history) {
+            const container = document.getElementById('historyContainer');
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">История изменений отсутствует</p>';
+                return;
+            }
+
+            container.innerHTML = history.map(record => `
+                <div class="history-item">
+                    <div class="history-header">
+                        <span class="history-user">${record.user ? record.user.name : 'Пользователь #' + record.changed_by}</span>
+                        <span class="history-date">${new Date(record.change_date).toLocaleString()}</span>
+                    </div>
+                    <div class="history-change">
+                        <span class="history-type ${record.change_type}">${getHistoryTypeText(record.change_type)}</span>
+                        ${formatHistoryChange(record)}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatFieldValue(fieldName, value) {
+            if (value === null || value === 'null' || value === '') return 'не указано';
+            
+            if (fieldName === 'status') {
+                // Обрабатываем разные форматы статуса
+                let statusValue = value;
+                
+                // Если пришел объект Enum (например, "DefectStatus.CLOSED")
+                if (typeof value === 'string' && value.includes('DefectStatus.')) {
+                    statusValue = value.replace('DefectStatus.', '').toLowerCase();
+                }
+                
+                // Если пришел объект с value
+                if (typeof value === 'object' && value.value) {
+                    statusValue = value.value.toLowerCase();
+                }
+                
+                const statuses = {
+                    'new': 'Новая',
+                    'in_progress': 'В работе',
+                    'under_review': 'На проверке', 
+                    'closed': 'Закрыта',
+                    'cancelled': 'Отменена'
+                };
+                
+                return statuses[statusValue] || statusValue;
+            }
+            
+            if (fieldName === 'priority') {
+                // Обрабатываем разные форматы приоритета
+                let priorityValue = value;
+                
+                // Если пришел объект Enum
+                if (typeof value === 'string' && value.includes('DefectPriority.')) {
+                    priorityValue = value.replace('DefectPriority.', '').toLowerCase();
+                }
+                
+                // Если пришел объект с value
+                if (typeof value === 'object' && value.value) {
+                    priorityValue = value.value.toLowerCase();
+                }
+                
+                const priorities = {
+                    'low': 'Низкий',
+                    'medium': 'Средний',
+                    'high': 'Высокий',
+                    'critical': 'Критический'
+                };
+                
+                return priorities[priorityValue] || priorityValue;
+            }
+            
+            if (fieldName === 'due_date') {
+                try {
+                    // Убираем время, если оно есть
+                    const dateOnly = value.split(' ')[0];
+                    return new Date(dateOnly).toLocaleDateString('ru-RU');
+                } catch {
+                    return value;
+                }
+            }
+            
+            return String(value);
+        }
+
+        // Форматирование изменений
+        function formatHistoryChange(record) {
+            if (record.change_type === 'created') {
+                return record.new_value || 'Дефект создан';
+            }
+            
+            if (record.field_name && record.old_value !== undefined && record.new_value !== undefined) {
+                const fieldNames = {
+                    'title': 'Название',
+                    'description': 'Описание', 
+                    'status': 'Статус',
+                    'priority': 'Приоритет',
+                    'due_date': 'Срок устранения',
+                    'assignee_id': 'Исполнитель'
+                };
+                
+                const fieldText = fieldNames[record.field_name] || record.field_name;
+                const oldVal = formatFieldValue(record.field_name, record.old_value);
+                const newVal = formatFieldValue(record.field_name, record.new_value);
+                
+                return `${fieldText}: "${oldVal}" → "${newVal}"`;
+            }
+            
+            return record.new_value || 'Изменения внесены';
+        }
+
+        // Тексты для типов изменений
+        function getHistoryTypeText(type) {
+            const types = {
+                'created': 'Создан',
+                'updated': 'Изменен',
+                'status_changed': 'Смена статуса'
+            };
+            return types[type] || type;
+        }
+
+
+        function exportToCSV() {
+            if (allDefects.length === 0) {
+                showError('Нет данных для экспорта');
+                return;
+            }
+
+            // Заголовки CSV
+            const headers = ['Название', 'Описание', 'Статус', 'Приоритет', 'Дата создания', 'Срок устранения'];
+            
+            // Данные
+            const csvData = allDefects.map(defect => [
+                `"${defect.title.replace(/"/g, '""')}"`,
+                `"${(defect.description || '').replace(/"/g, '""')}"`,
+                `"${getStatusText(defect.status)}"`,
+                `"${getPriorityText(defect.priority)}"`,
+                `"${new Date(defect.created_at).toLocaleDateString('ru-RU')}"`,
+                `"${defect.due_date ? new Date(defect.due_date).toLocaleDateString('ru-RU') : 'не указан'}"`
+            ]);
+
+            // Объединяем заголовки и данные
+            const csvContent = [headers, ...csvData]
+                .map(row => row.join(','))
+                .join('\n');
+
+            // Создаем и скачиваем файл
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `дефекты_проекта_${currentProjectId}_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showSuccess('Отчет успешно экспортирован в CSV!');
         }
     </script>
 </body>

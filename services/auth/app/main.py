@@ -243,10 +243,8 @@ async def update_defect_api(
     if not defect or defect.project_id != project_id:
         raise HTTPException(status_code=404, detail="Defect not found")
     
-    #check_edit_defect_permission(current_user, defect)
-    
     update_data = defect_update.dict(exclude_unset=True)
-    return await crud.update_defect(db, defect_id, **update_data)
+    return await crud.update_defect(db, defect_id, current_user.id, **update_data)  # Добавлен current_user.id
 
 # Comments API
 @app.post("/api/projects/{project_id}/defects/{defect_id}/comments/", response_model=CommentResponse)
@@ -360,7 +358,29 @@ async def update_project_api(
     
     return updated_project
 
-
+@app.get("/api/projects/{project_id}/defects/{defect_id}/history/", response_model=list[DefectHistoryResponse])
+async def read_defect_history(
+    project_id: int,
+    defect_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    authorization: str = Header(...)
+):
+    current_user = await get_current_user(authorization, db)
+    await check_project_access(db, project_id, current_user)
+    
+    defect = await crud.get_defect(db, defect_id)
+    if not defect or defect.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Defect not found")
+    
+    history_records = await crud.get_defect_history(db, defect_id, skip=skip, limit=limit)
+    
+    # Добавляем информацию о пользователях
+    for record in history_records:
+        record.user = await crud.get_user(db, record.changed_by)
+    
+    return history_records
 
 
 

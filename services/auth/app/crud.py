@@ -60,6 +60,13 @@ async def create_defect(db: AsyncSession, title: str, description: str, project_
     db.add(defect)
     await db.commit()
     await db.refresh(defect)
+    
+    # Запись в историю
+    await create_defect_history(
+        db, defect.id, author_id, "created",
+        field_name="all", new_value=f"Создан дефект: {title}"
+    )
+    
     return defect
 
 async def get_defect(db: AsyncSession, defect_id: int):
@@ -72,14 +79,32 @@ async def get_defects_by_project(db: AsyncSession, project_id: int, skip: int = 
     )
     return result.scalars().all()
 
-async def update_defect(db: AsyncSession, defect_id: int, **kwargs):
+async def update_defect(db: AsyncSession, defect_id: int, current_user_id: int, **kwargs):
     defect = await get_defect(db, defect_id)
     if defect:
+        # Сохраняем старые значения для истории
+        changes = []
         for key, value in kwargs.items():
             if value is not None:
-                setattr(defect, key, value)
-        await db.commit()
-        await db.refresh(defect)
+                old_value = getattr(defect, key)
+                if old_value != value:  # Только если значение изменилось
+                    changes.append((key, old_value, value))
+                    setattr(defect, key, value)
+        
+        if changes:
+            defect.updated_at = func.now()
+            await db.commit()
+            await db.refresh(defect)
+            
+            # Записываем изменения в историю
+            for field_name, old_val, new_val in changes:
+                await create_defect_history(
+                    db, defect_id, current_user_id, "updated",
+                    field_name=field_name,
+                    old_value=str(old_val),
+                    new_value=str(new_val)
+                )
+    
     return defect
 
 async def create_comment(db: AsyncSession, text: str, defect_id: int, author_id: str):
@@ -110,3 +135,28 @@ async def update_project(db: AsyncSession, project_id: int, **kwargs):
 
 
 
+async def create_defect_history(db: AsyncSession, defect_id: int, changed_by: int, 
+                               change_type: str, field_name: str = None, 
+                               old_value: str = None, new_value: str = None):
+    history = DefectHistory(
+        defect_id=defect_id,
+        changed_by=changed_by,
+        change_type=change_type,
+        field_name=field_name,
+        old_value=old_value,
+        new_value=new_value
+    )
+    db.add(history)
+    await db.commit()
+    await db.refresh(history)
+    return history
+
+async def get_defect_history(db: AsyncSession, defect_id: int, skip: int = 0, limit: int = 100):
+    result = await db.execute(
+        select(DefectHistory)
+        .where(DefectHistory.defect_id == defect_id)
+        .order_by(DefectHistory.change_date.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+    return result.scalars().all()
