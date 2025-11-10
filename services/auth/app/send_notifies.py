@@ -15,3 +15,10 @@ async def send_notification(data):
         
     except aiohttp.ClientError as e:
         raise HTTPException(status_code=500, detail=f"Connection error: {str(e)}")
+    
+
+
+
+
+
+

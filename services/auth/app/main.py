@@ -12,14 +12,21 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from fastapi.responses import HTMLResponse
+from faststream.rabbit import RabbitBroker, RabbitQueue
 
-
+broker = RabbitBroker()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_tables()
+    await broker.start()
+
+    await broker.declare_queue(RabbitQueue("main"))
+
     print("✅ Таблицы созданы/проверены")
     yield
+    await broker.close()
+ 
 
 
 
@@ -90,7 +97,10 @@ async def register_user(user: User, db: AsyncSession = Depends(get_db)):
 
     message = 'Поздравляем Вас с началом работы в Control System!'
     data = {"email": new_user.email, "message": message, "full_name": new_user.name,  "subject": 'Успешная регистрация!'}
-    ans = await send_notification(data)
+    # ans = await send_notification(data)
+
+    await broker.publish(data, queue="main")
+
 
     return {"msg": "Пользователь успешно зарегистрирован", 'user': new_user}
 
@@ -151,7 +161,10 @@ async def create_project_api(
 
     message = str(f'Вы создали новый проект: {project.name} по адресу: {project.address}')
     data = {"email": current_user.email, "message": message, "full_name": current_user.name,  "subject": 'Создание нового проекта!'}
-    await send_notification(data)
+    # await send_notification(data)
+
+    await broker.publish(data, queue="main")
+
 
     return await crud.create_project(
         db, 
@@ -201,8 +214,9 @@ async def create_defect_api(
 
     message = str(f'Вы создали новый дефект: {defect.title} для проекта №{project_id}\nСпасибо за работу в Control System')
     data = {"email": current_user.email, "message": message, "full_name": current_user.name,  "subject": 'Создание нового дефекта!'}
-    await send_notification(data)
+    # await send_notification(data)
 
+    await broker.publish(data, queue="main")
 
     return await crud.create_defect(
         db,

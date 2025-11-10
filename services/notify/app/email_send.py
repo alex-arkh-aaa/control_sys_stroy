@@ -6,8 +6,6 @@ from config import settings
 async def send_email(mail: str, message: str, full_name: str, subject: str) -> bool:
     
     def sync_send_email():
-
-        
         message_text = f'Добрый день, {full_name}!\n{message}'
         msg = MIMEText(message_text, "plain", "utf-8")
         msg["Subject"] = subject
