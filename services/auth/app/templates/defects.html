@@ -675,7 +675,7 @@
 
                     <div class="form-group">
                         <label for="defectDueDate">Срок устранения</label>
-                        <input type="date" id="defectDueDate" name="due_date">
+                        <input type="date" id="defectDueDate" name="update_at">
                     </div>
 
                     <button type="submit" class="btn" id="createDefectBtn" style="width: 100%;">Создать дефект</button>
@@ -803,7 +803,7 @@
 
                 <div class="form-group">
                     <label for="editDefectDueDate">Срок устранения</label>
-                    <input type="date" id="editDefectDueDate" name="due_date">
+                    <input type="date" id="editDefectDueDate" name="update_at">
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 25px;">
@@ -982,6 +982,7 @@
                             <div class="defect-meta">
                                 <span class="defect-status status-${defect.status}">${getStatusText(defect.status)}</span>
                                 Создан: ${new Date(defect.created_at).toLocaleDateString()}
+                                Обновлен: ${new Date(defect.updated_at).toLocaleDateString()}
                             </div>
                         </div>
                         <div style="display: flex; gap: 10px; align-items: flex-start;">
@@ -1255,8 +1256,8 @@
                     document.getElementById('editDefectPriority').value = defect.priority;
                     document.getElementById('editDefectStatus').value = defect.status;
                     
-                    if (defect.due_date) {
-                        const dueDate = new Date(defect.due_date).toISOString().split('T')[0];
+                    if (defect.update_at) {
+                        const dueDate = new Date(defect.update_at).toISOString().split('T')[0];
                         document.getElementById('editDefectDueDate').value = dueDate;
                     } else {
                         document.getElementById('editDefectDueDate').value = '';
@@ -1278,7 +1279,7 @@
                 description: document.getElementById('editDefectDescription').value,
                 priority: document.getElementById('editDefectPriority').value,
                 status: document.getElementById('editDefectStatus').value,
-                due_date: document.getElementById('editDefectDueDate').value || null
+                update_at: document.getElementById('editDefectDueDate').value || null
             };
 
             // Показываем спиннер
@@ -1319,7 +1320,7 @@
                 title: document.getElementById('defectTitle').value,
                 description: document.getElementById('defectDescription').value,
                 priority: document.getElementById('defectPriority').value,
-                due_date: document.getElementById('defectDueDate').value || null
+                update_at: document.getElementById('defectDueDate').value || null
             };
 
             // Показываем спиннер
@@ -1615,7 +1616,7 @@
                 return priorities[priorityValue] || priorityValue;
             }
             
-            if (fieldName === 'due_date') {
+            if (fieldName === 'update_at') {
                 try {
                     // Убираем время, если оно есть
                     const dateOnly = value.split(' ')[0];
@@ -1640,7 +1641,7 @@
                     'description': 'Описание', 
                     'status': 'Статус',
                     'priority': 'Приоритет',
-                    'due_date': 'Срок устранения',
+                    'update_at': 'Срок устранения',
                     'assignee_id': 'Исполнитель'
                 };
                 
@@ -1681,7 +1682,7 @@
                 `"${getStatusText(defect.status)}"`,
                 `"${getPriorityText(defect.priority)}"`,
                 `"${new Date(defect.created_at).toLocaleDateString('ru-RU')}"`,
-                `"${defect.due_date ? new Date(defect.due_date).toLocaleDateString('ru-RU') : 'не указан'}"`
+                `"${defect.update_at ? new Date(defect.update_at).toLocaleDateString('ru-RU') : 'не указан'}"`
             ]);
 
             // Объединяем заголовки и данные
