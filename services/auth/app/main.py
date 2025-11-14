@@ -121,7 +121,6 @@ async def login(user_creds: UserCreds, db: AsyncSession = Depends(get_db)):
 
     token_data = {"sub": user_creds.email}
     access_token = create_access_token(data=token_data)
-    print(existing_user.email, existing_user.hashed_password)
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -308,9 +307,7 @@ async def read_users_api(
     authorization: str = Header(...)
 ):
     current_user = await get_current_user(authorization, db)
-    print(current_user)
     ans = await crud.get_users(db, skip=skip, limit=limit)
-    print(ans)
     return [current_user]   
 
 # @app.get("/api/users/{user_id}", response_model=UserResponse)

@@ -52,4 +52,4 @@ async def notify(request: NotificationRequest):
     except Exception as e:
         return {"status": "failed", "error": str(e)}
 
-#aststream run app.main:app --reload
+#faststream run app.main:app --reload

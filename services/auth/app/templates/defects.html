@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Дефекты - Control System</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+    </script>
+
     <style>
         * {
             margin: 0;
@@ -505,6 +508,82 @@
         .history-type.created { background: #28a745; }
         .history-type.updated { background: #ffc107; color: #212529; }
         .history-type.status_changed { background: #17a2b8; }
+
+        /* Дашборды и статистика */
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e1e5e9;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            height: 370px;
+        }
+
+        .dashboard-title {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 220px;
+            position: relative;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .priority-stat {
+            border-left-color: #dc3545;
+        }
+
+        .status-stat {
+            border-left-color: #28a745;
+        }
+
+        .age-stat {
+            border-left-color: #ffc107;
+        }
+
+        .total-stat {
+            border-left-color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -622,6 +701,57 @@
                 <div id="historySection" class="history-section" style="display: none; margin-top: 30px;">
                     <h3 class="section-title">История изменений</h3>
                     <div id="historyContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция дашбордов -->
+        <div class="dashboard">
+            <!-- График по приоритетам -->
+            <div class="dashboard-card">
+                <h3 class="dashboard-title">Распределение по приоритетам</h3>
+                <div class="chart-container">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- График по статусам -->
+            <div class="dashboard-card">
+                <h3 class="dashboard-title">Статусы дефектов</h3>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Статистика -->
+            <div class="dashboard-card">
+                <h3 class="dashboard-title">Общая статистика</h3>
+                <div class="stats-grid">
+                    <div class="stat-item total-stat">
+                        <div class="stat-number" id="totalDefects">0</div>
+                        <div class="stat-label">Всего дефектов</div>
+                    </div>
+                    <div class="stat-item priority-stat">
+                        <div class="stat-number" id="criticalDefects">0</div>
+                        <div class="stat-label">Критических</div>
+                    </div>
+                    <div class="stat-item status-stat">
+                        <div class="stat-number" id="openDefects">0</div>
+                        <div class="stat-label">Открытых</div>
+                    </div>
+                    <div class="stat-item age-stat">
+                        <div class="stat-number" id="avgAge">0</div>
+                        <div class="stat-label">Дней в среднем</div>
+                    </div>
+                </div>
+                
+                <!-- Дополнительная статистика -->
+                <div style="margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 10px;">
+                    <div style="font-size: 14px; color: #666; margin-bottom: 8px;">Эффективность:</div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 12px; color: #333;">Закрыто дефектов:</span>
+                        <span style="font-size: 16px; font-weight: 600; color: #28a745;" id="closedDefects">0</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -831,9 +961,13 @@
             const container = document.getElementById('defectsContainer');
             const emptyState = document.getElementById('emptyState');
 
+            console.log('displayDefects called with:', defects.length, 'defects');
+
             if (defects.length === 0) {
                 container.style.display = 'none';
                 emptyState.style.display = 'block';
+                // Скрываем дашборды если нет данных
+                document.querySelector('.dashboard').style.display = 'none';
                 return;
             }
 
@@ -870,6 +1004,170 @@
                 if (selectedCard) {
                     selectedCard.style.background = '#e3f2fd';
                 }
+            }
+
+            console.log('Calling initDashboards...');
+            // Показываем и обновляем дашборды
+            document.querySelector('.dashboard').style.display = 'grid';
+            initDashboards(defects);
+        }
+
+        // Функции для дашбордов
+        function initDashboards(defects) {
+            updateStats(defects);
+
+            const priorityCanvas = document.getElementById('priorityChart');
+            const statusCanvas = document.getElementById('statusChart');
+            
+            if (!priorityCanvas || !statusCanvas) {
+                console.error('Canvas elements not found');
+                return;
+            }
+            console.error('print something');
+            createPriorityChart(defects);
+            createStatusChart(defects);
+        }
+
+        function updateStats(defects) {
+            const total = defects.length;
+            const critical = defects.filter(d => d.priority === 'critical').length;
+            const open = defects.filter(d => !['closed', 'cancelled'].includes(d.status)).length;
+            const closed = defects.filter(d => d.status === 'closed').length;
+            
+            // Расчет среднего возраста дефектов
+            const now = new Date();
+            const totalAge = defects.reduce((sum, defect) => {
+                const created = new Date(defect.created_at);
+                const age = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+                return sum + age;
+            }, 0);
+            const avgAge = total > 0 ? Math.round(totalAge / total) : 0;
+
+            document.getElementById('totalDefects').textContent = total;
+            document.getElementById('criticalDefects').textContent = critical;
+            document.getElementById('openDefects').textContent = open;
+            document.getElementById('closedDefects').textContent = closed;
+            document.getElementById('avgAge').textContent = avgAge;
+        }
+
+        function createPriorityChart(defects) {
+            const ctx = document.getElementById('priorityChart');
+            if (!ctx) {
+                console.error('priorityChart canvas not found');
+                return;
+            }
+            
+            // Убедимся что context правильный
+            const context = ctx.getContext('2d');
+            
+            // Уничтожаем предыдущий график если он существует И является объектом Chart
+            if (window.priorityChart && window.priorityChart instanceof Chart) {
+                window.priorityChart.destroy();
+            }
+            
+            const priorities = ['critical', 'high', 'medium', 'low'];
+            const counts = priorities.map(priority => 
+                defects.filter(d => d.priority === priority).length
+            );
+
+            console.log('Creating priority chart with data:', counts);
+
+            try {
+                window.priorityChart = new Chart(context, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Критические', 'Высокие', 'Средние', 'Низкие'],
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: [
+                                '#dc3545',
+                                '#fd7e14', 
+                                '#ffc107',
+                                '#28a745'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Priority chart created successfully');
+            } catch (error) {
+                console.error('Error creating priority chart:', error);
+            }
+        }
+
+        function createStatusChart(defects) {
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) {
+                console.error('statusChart canvas not found');
+                return;
+            }
+            
+            const context = ctx.getContext('2d');
+            
+            // Уничтожаем предыдущий график если он существует И является объектом Chart
+            if (window.statusChart && window.statusChart instanceof Chart) {
+                window.statusChart.destroy();
+            }
+            
+            const statuses = ['new', 'in_progress', 'under_review', 'closed', 'cancelled'];
+            const counts = statuses.map(status => 
+                defects.filter(d => d.status === status).length
+            );
+
+            console.log('Creating status chart with data:', counts);
+
+            try {
+                window.statusChart = new Chart(context, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Новые', 'В работе', 'На проверке', 'Закрытые', 'Отмененные'],
+                        datasets: [{
+                            data: counts,
+                            backgroundColor: [
+                                '#6c757d',
+                                '#007bff',
+                                '#17a2b8', 
+                                '#28a745',
+                                '#dc3545'
+                            ],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: 1
+                                }
+                            }
+                        }
+                    }
+                });
+                console.log('Status chart created successfully');
+            } catch (error) {
+                console.error('Error creating status chart:', error);
             }
         }
 
